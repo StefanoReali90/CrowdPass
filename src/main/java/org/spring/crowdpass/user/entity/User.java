@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.spring.crowdpass.user.enums.Role;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -28,12 +29,18 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = true)
+    @Column(nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    @Column(nullable = true)
+    private String resetPasswordToken;
+
+    @Column(nullable = true)
+    private LocalDateTime resetPasswordTokenExpiry;
 
 
 
