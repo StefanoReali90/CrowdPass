@@ -6,13 +6,11 @@ import lombok.RequiredArgsConstructor;
 import org.spring.crowdpass.user.dto.*;
 import org.spring.crowdpass.user.entity.User;
 import org.spring.crowdpass.user.enums.Role;
-import org.spring.crowdpass.user.exception.EmailAlreadyExistsException;
-import org.spring.crowdpass.user.exception.InvalidPasswordException;
-import org.spring.crowdpass.user.exception.TokenExpiredException;
-import org.spring.crowdpass.user.exception.UserNotFoundException;
+import org.spring.crowdpass.user.exception.*;
 import org.spring.crowdpass.user.mapper.UserMapper;
 import org.spring.crowdpass.user.repository.UserRepository;
 import org.spring.crowdpass.user.security.JwtService;
+import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -40,11 +38,16 @@ public class UserService implements UserDetailsService {
 
     private final JwtService jwtService;
 
+    private final Environment environment;
+
     @Transactional
     public UserResponse createUser(AdminRegistrationRequest request) {
 
         if (request.email() != null && userRepository.existsByEmail(request.email())) {
             throw new EmailAlreadyExistsException("Email already exists");
+        }
+        if(request.registrationCode() == null || !request.registrationCode().equals(environment.getProperty("REGISTRATION_KEY"))) {
+            throw new InvalidSecretKeyException("Invalid registration code");
         }
         User user = new User();
         user.setNome(request.nome());
@@ -56,6 +59,22 @@ public class UserService implements UserDetailsService {
         return userMapper.toResponse(savedUser);
 
 
+    }
+
+    @Transactional
+    public UserResponse createStaffUser(StaffRegistrationRequest request) {
+        if (request.email() != null && userRepository.existsByEmail(request
+                .email())) {
+            throw new EmailAlreadyExistsException("Email already exists");
+        }
+        User user = new User();
+        user.setNome(request.nome());
+        user.setCognome(request.cognome());
+        user.setEmail(request.email());
+        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setRole(Role.STAFF);
+        User savedUser = userRepository.save(user);
+        return userMapper.toResponse(savedUser);
     }
 
     @Transactional(readOnly = true)

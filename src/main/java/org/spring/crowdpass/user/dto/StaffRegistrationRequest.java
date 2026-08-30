@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record AdminRegistrationRequest(
+public record StaffRegistrationRequest(
         @NotBlank(message = "Il nome è obbligatorio")
         String nome,
         @NotBlank(message = "Il cognome è obbligatorio")
@@ -14,8 +14,6 @@ public record AdminRegistrationRequest(
         String email,
         @NotBlank(message = "La password è obbligatoria")
         @Size(min = 8, max = 100)
-        String password,
-        @NotBlank(message = "Il codice di registrazione è obbligatorio")
-        String registrationCode
+        String password
 ) {
 }
