@@ -3,6 +3,7 @@ package org.spring.crowdpass.event.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.spring.crowdpass.event.enums.EventState;
+import org.spring.crowdpass.user.entity.User;
 
 import java.time.LocalDateTime;
 
@@ -34,6 +35,20 @@ public class Event {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EventState eventState;
+
+    @Column(nullable = false)
+    private String description;
+
+    @Column(nullable = false)
+    private String imageUrl;
+
+    @Column(nullable = false)
+    private String location;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
 
 
 }
