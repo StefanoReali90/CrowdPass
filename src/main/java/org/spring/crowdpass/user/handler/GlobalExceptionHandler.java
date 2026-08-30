@@ -1,0 +1,55 @@
+package org.spring.crowdpass.user.handler;
+
+import org.spring.crowdpass.user.exception.CrowdPassException;
+import org.spring.crowdpass.user.exception.UserNotFoundException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.Instant;
+
+@RestControllerAdvice
+
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(CrowdPassException.class)
+    public ProblemDetail handleCrowdPassException(CrowdPassException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                ex.getStatus(),
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Errore");
+        problemDetail.setProperty("timestamp", Instant.now());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ProblemDetail handleGenericException(Exception ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Errore interno");
+        problemDetail.setProperty("timestamp", Instant.now());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ProblemDetail> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "Dati di input non validi"
+        );
+        problemDetail.setTitle("Errore di validazione");
+        problemDetail.setProperty("timestamp", Instant.now());
+        problemDetail.setProperty("errors", ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .toList());
+
+        return ResponseEntity.badRequest().body(problemDetail);
+    }
+
+}

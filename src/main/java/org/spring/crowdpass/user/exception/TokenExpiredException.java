@@ -1,7 +1,9 @@
 package org.spring.crowdpass.user.exception;
 
-public class TokenExpiredException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class TokenExpiredException extends CrowdPassException {
     public TokenExpiredException(String message) {
-        super(message);
+        super(message, HttpStatus.UNAUTHORIZED);
     }
 }
