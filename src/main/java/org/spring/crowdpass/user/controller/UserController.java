@@ -64,4 +64,10 @@ public class UserController {
         userService.resetPassword(resetPasswordRequest);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping(path = "/login", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        LoginResponse response = userService.login(request);
+        return ResponseEntity.ok(response);
+    }
 }

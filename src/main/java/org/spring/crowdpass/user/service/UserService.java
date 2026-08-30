@@ -1,6 +1,7 @@
 package org.spring.crowdpass.user.service;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.spring.crowdpass.user.dto.*;
 import org.spring.crowdpass.user.entity.User;
@@ -11,6 +12,13 @@ import org.spring.crowdpass.user.exception.TokenExpiredException;
 import org.spring.crowdpass.user.exception.UserNotFoundException;
 import org.spring.crowdpass.user.mapper.UserMapper;
 import org.spring.crowdpass.user.repository.UserRepository;
+import org.spring.crowdpass.user.security.JwtService;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,13 +29,16 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
     private final PasswordEncoder passwordEncoder;
 
     private final UserMapper userMapper;
+    private final AuthenticationManager authenticationManager;
+
+    private final JwtService jwtService;
 
     @Transactional
     public UserResponse createUser(AdminRegistrationRequest request) {
@@ -123,4 +134,16 @@ public class UserService {
     }
 
 
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+
+    public LoginResponse login(@Valid LoginRequest request) {
+        User user = userRepository.findByEmail(request.email()).orElseThrow(() -> new UserNotFoundException("User not found"));
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+        String token = jwtService.generateToken(user);
+        return new LoginResponse(token);
+    }
 }
