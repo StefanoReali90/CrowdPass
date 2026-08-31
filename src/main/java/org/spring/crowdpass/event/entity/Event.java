@@ -21,9 +21,12 @@ public class Event {
     private String name;
 
     @Column(nullable = false)
-    private LocalDateTime dateTime;
+    private LocalDateTime startDateTime;
 
     @Column(nullable = false)
+    private LocalDateTime endDateTime;
+
+    @Column(nullable = true)
     private Double normalPrice;
 
     @Column(nullable = false)
