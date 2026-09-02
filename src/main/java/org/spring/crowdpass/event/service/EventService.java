@@ -68,6 +68,14 @@ public class EventService {
         List<Event> events = eventRepository.findAll();
         return events.stream().map(eventMapper::toResponse).toList();
     }
+
+    @Transactional(readOnly = true)
+    public List<EventResponse> getEventsByUser(Long userId) {
+        return eventRepository.findByUserId(userId).stream()
+                .map(eventMapper::toResponse)
+                .toList();
+    }
+
     @Transactional
     public void deleteEventById(Long id) {
         if (!eventRepository.existsById(id)) {
@@ -75,5 +83,6 @@ public class EventService {
         }
         eventRepository.deleteById(id);
     }
+
 
 }
