@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.spring.crowdpass.booking.dto.BookingRequest;
 import org.spring.crowdpass.booking.dto.BookingResponse;
 import org.spring.crowdpass.booking.entity.Booking;
+import org.spring.crowdpass.booking.enums.BookingStatus;
 import org.spring.crowdpass.booking.exception.AlreadyBookedException;
+import org.spring.crowdpass.booking.exception.BookingNotFoundException;
 import org.spring.crowdpass.booking.exception.NoTicketException;
 import org.spring.crowdpass.booking.mapper.BookingMapper;
 import org.spring.crowdpass.booking.repository.BookingRepository;
@@ -28,16 +30,24 @@ public class BookingService {
         Booking booking = bookingMapper.toEntity(bookingRequest);
         Event event = eventRepository.findById(bookingRequest.eventId())
                 .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + bookingRequest.eventId()));
-        if (bookingRepository.existsByEventIdAndEmail(bookingRequest.eventId(), bookingRequest.email())) {
+        if (bookingRepository.existsByEventIdAndEmailAndBookingStatusNot(bookingRequest.eventId(), bookingRequest.email(), BookingStatus.CANCELLED)) {
             throw new AlreadyBookedException("Booking already exists for this event and email");
         }
-        if (bookingRepository.countByEventId(event.getId()) >= event.getTotalTickets()) {
+        if (bookingRepository.countByEventIdAndBookingStatusNot(event.getId(), BookingStatus.CANCELLED) >= event.getTotalTickets()) {
             throw new NoTicketException("No more tickets available for this event");
         }
         booking.setEvent(event);
         Booking savedBooking = bookingRepository.save(booking);
         String qrCode = qrCodeService.createQrCode(savedBooking.getUuid().toString());
         return bookingMapper.toResponse(savedBooking, qrCode);
+
+    }
+
+    @Transactional
+    public void deleteBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + bookingId));
+        booking.setBookingStatus(BookingStatus.CANCELLED);
 
     }
 }
