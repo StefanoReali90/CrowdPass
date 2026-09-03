@@ -39,7 +39,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/user/login", "/user/register", "/user/recover-password", "/user/reset-password").permitAll()
-
+                        .requestMatchers(HttpMethod.POST, "/bookings/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/bookings/{uuid}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/bookings/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/user/staff-register").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/user/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/user/**").hasRole("ADMIN")
@@ -48,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/events/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/events/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/events/my-events").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/bookings/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/events", "/events/{id}").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

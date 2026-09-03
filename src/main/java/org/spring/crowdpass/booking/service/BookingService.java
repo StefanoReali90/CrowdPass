@@ -16,6 +16,9 @@ import org.spring.crowdpass.event.exception.EventNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class BookingService {
@@ -41,6 +44,52 @@ public class BookingService {
         String qrCode = qrCodeService.createQrCode(savedBooking.getUuid().toString());
         return bookingMapper.toResponse(savedBooking, qrCode);
 
+    }
+
+    @Transactional(readOnly = true)
+    public BookingResponse getBookingByUuid(UUID uuid) {
+        Booking booking = bookingRepository.findByUuid(uuid)
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found with uuid: " + uuid));
+        return bookingMapper.toResponse(booking, qrCodeService.createQrCode(booking.getUuid().toString()));
+    }
+
+    @Transactional(readOnly = true)
+    public BookingResponse getBookingById(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + bookingId));
+        return bookingMapper.toResponse(booking, qrCodeService.createQrCode(booking.getUuid().toString()));
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getBookingsByEventId(Long eventId) {
+        List<Booking> bookings = bookingRepository.findAllByEventId(eventId);
+        return bookings.stream()
+                .map(booking -> bookingMapper.toResponse(booking, qrCodeService.createQrCode(booking.getUuid().toString())))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getBookingsByEmail(String email) {
+        List<Booking> findAllByEmail = bookingRepository.findAllByEmail(email);
+        return findAllByEmail.stream()
+                .map(booking -> bookingMapper.toResponse(booking, qrCodeService.createQrCode(booking.getUuid().toString())))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getBookingsByEventIdAndEmail(Long eventId, String email) {
+        List<Booking> bookings = bookingRepository.findAllByEventIdAndEmail(eventId, email);
+        return bookings.stream()
+                .map(booking -> bookingMapper.toResponse(booking, qrCodeService.createQrCode(booking.getUuid().toString())))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getAllBookings() {
+        List<Booking> bookings = bookingRepository.findAll();
+        return bookings.stream()
+                .map(booking -> bookingMapper.toResponse(booking, qrCodeService.createQrCode(booking.getUuid().toString())))
+                .toList();
     }
 
     @Transactional
