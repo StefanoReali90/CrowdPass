@@ -9,6 +9,7 @@ import org.spring.crowdpass.booking.enums.BookingStatus;
 import org.spring.crowdpass.event.entity.Event;
 import org.spring.crowdpass.event.enums.EventState;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -44,6 +45,9 @@ public class Booking {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private BookingStatus bookingStatus = BookingStatus.CREATED;
+
+    @Column(nullable = true)
+    private LocalDateTime checkInDateTime;
 
     @PrePersist
     public void prePersist() {

@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.spring.crowdpass.booking.entity.Booking;
 import org.spring.crowdpass.booking.enums.BookingStatus;
+import org.spring.crowdpass.event.entity.Event;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -24,4 +25,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findAllByEventId(Long eventId);
     List<Booking> findAllByEmail(String email);
     List<Booking> findAllByEventIdAndEmail(Long eventId, String email);
+
+    long countByEventIdAndBookingStatus(Long eventId, BookingStatus bookingStatus);
 }

@@ -48,6 +48,9 @@ public class Event {
     @Column(nullable = false)
     private String location;
 
+    @Column(nullable = false)
+    private int walkInCount = 0;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

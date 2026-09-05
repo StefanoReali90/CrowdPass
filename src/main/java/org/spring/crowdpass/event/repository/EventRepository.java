@@ -1,4 +1,4 @@
-package org.spring.crowdpass.event;
+package org.spring.crowdpass.event.repository;
 
 import org.spring.crowdpass.event.entity.Event;
 import org.springframework.data.jpa.repository.JpaRepository;

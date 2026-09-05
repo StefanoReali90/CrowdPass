@@ -3,19 +3,22 @@ package org.spring.crowdpass.booking.service;
 import lombok.RequiredArgsConstructor;
 import org.spring.crowdpass.booking.dto.BookingRequest;
 import org.spring.crowdpass.booking.dto.BookingResponse;
+import org.spring.crowdpass.booking.dto.CheckInResponse;
 import org.spring.crowdpass.booking.entity.Booking;
 import org.spring.crowdpass.booking.enums.BookingStatus;
-import org.spring.crowdpass.booking.exception.AlreadyBookedException;
-import org.spring.crowdpass.booking.exception.BookingNotFoundException;
-import org.spring.crowdpass.booking.exception.NoTicketException;
+import org.spring.crowdpass.booking.exception.*;
 import org.spring.crowdpass.booking.mapper.BookingMapper;
 import org.spring.crowdpass.booking.repository.BookingRepository;
-import org.spring.crowdpass.event.EventRepository;
 import org.spring.crowdpass.event.entity.Event;
+import org.spring.crowdpass.event.enums.EventState;
+import org.spring.crowdpass.event.exception.AccessDeniedException;
 import org.spring.crowdpass.event.exception.EventNotFoundException;
+import org.spring.crowdpass.event.repository.EventRepository;
+import org.spring.crowdpass.user.entity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -99,4 +102,38 @@ public class BookingService {
         booking.setBookingStatus(BookingStatus.CANCELLED);
 
     }
+
+    @Transactional
+    public CheckInResponse checkInBooking(UUID uuid) {
+        Booking booking = bookingRepository.findByUuid(uuid).orElseThrow(() -> new BookingNotFoundException("Booking not found with uuid: " + uuid));
+        switch (booking.getBookingStatus()) {
+            case CREATED:
+                booking.setBookingStatus((BookingStatus.VALIDATED));
+                booking.setCheckInDateTime(LocalDateTime.now());
+                return bookingMapper.toCheckInResponse(booking);
+            case VALIDATED:
+                throw new AlreadyValidatedException("Booking already validated with uuid: " + uuid);
+
+
+            case CANCELLED:
+                throw new AlreadyCanceledException("Booking already canceled with uuid: " + uuid);
+
+            default:
+                throw new BookingStatusException("Booking status not valid for check-in with uuid: " + uuid);
+        }
+    }
+
+    @Transactional
+    public void anonymizeBookingsByEventId(Long eventId) {
+        List<Booking> bookings = bookingRepository.findAllByEventId(eventId);
+        for (Booking booking : bookings) {
+            booking.setName("ANONYMIZED");
+            booking.setSurname("ANONYMIZED");
+            booking.setEmail("anon_" + booking.getUuid() + "@anonymized.local");
+            booking.setPhone(null);
+        }
+    }
+
+
+
 }

@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.spring.crowdpass.booking.dto.BookingRequest;
 import org.spring.crowdpass.booking.dto.BookingResponse;
+import org.spring.crowdpass.booking.dto.CheckInResponse;
 import org.spring.crowdpass.booking.service.BookingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -60,6 +61,13 @@ public class BookingController {
         List<BookingResponse> bookingResponses = bookingService.getAllBookings();
         return ResponseEntity.ok(bookingResponses);
     }
+
+    @PatchMapping(path = "/check-in/{uuid}", produces = "application/json")
+    public ResponseEntity<CheckInResponse> checkInBooking(@PathVariable UUID uuid) {
+        CheckInResponse checkInResponse = bookingService.checkInBooking(uuid);
+        return ResponseEntity.ok(checkInResponse);
+    }
+
 
 
     @DeleteMapping(path = "/{bookingId}", produces = "application/json")

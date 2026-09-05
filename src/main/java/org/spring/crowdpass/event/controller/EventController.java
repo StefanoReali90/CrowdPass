@@ -3,6 +3,7 @@ package org.spring.crowdpass.event.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.spring.crowdpass.event.dto.EventDashboardResponse;
 import org.spring.crowdpass.event.dto.EventRequest;
 import org.spring.crowdpass.event.dto.EventResponse;
 import org.spring.crowdpass.event.service.EventService;
@@ -55,9 +56,33 @@ public class EventController {
 
     }
 
+    @GetMapping(path="/{id}/dashboard", produces = "application/json")
+    public ResponseEntity <EventDashboardResponse> getEventDashboard(@PathVariable Long id, @AuthenticationPrincipal User admin) {
+        EventDashboardResponse dashboardResponse = eventService.getEventDashboardData(id, admin);
+        return ResponseEntity.ok(dashboardResponse);
+    }
+
     @DeleteMapping(path = "/{id}")
     public ResponseEntity<Void> deleteEvent(@PathVariable Long id) {
         eventService.deleteEventById(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping(path = "/{id}/walk-in")
+    public ResponseEntity<Void> incrementWalkInCount(@PathVariable Long id) {
+        eventService.incrementWalkInCount(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping(path = "/{id}/walk-in/decrement")
+    public ResponseEntity<Void> decrementWalkInCount(@PathVariable Long id) {
+        eventService.decrementWalkInCount(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping(path="/{id}/close", produces = "application/json")
+    public ResponseEntity<Void> closeEvent(@PathVariable Long id, @AuthenticationPrincipal User admin) {
+        eventService.closeEvent(id, admin);
         return ResponseEntity.noContent().build();
     }
 }

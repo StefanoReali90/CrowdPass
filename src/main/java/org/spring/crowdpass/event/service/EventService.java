@@ -1,7 +1,13 @@
 package org.spring.crowdpass.event.service;
 
 import lombok.RequiredArgsConstructor;
-import org.spring.crowdpass.event.EventRepository;
+import org.spring.crowdpass.booking.enums.BookingStatus;
+import org.spring.crowdpass.booking.repository.BookingRepository;
+import org.spring.crowdpass.booking.service.BookingService;
+import org.spring.crowdpass.event.dto.EventDashboardResponse;
+import org.spring.crowdpass.event.enums.EventState;
+import org.spring.crowdpass.event.exception.AccessDeniedException;
+import org.spring.crowdpass.event.repository.EventRepository;
 import org.spring.crowdpass.event.dto.EventRequest;
 import org.spring.crowdpass.event.dto.EventResponse;
 import org.spring.crowdpass.event.entity.Event;
@@ -20,8 +26,10 @@ import java.util.List;
 public class EventService {
 
     private final EventRepository eventRepository;
+    private final BookingRepository bookingRepository;
 
     private final EventMapper eventMapper;
+    private final BookingService bookingService;
 
     private void validateEventDates(EventRequest event) {
         if (event.start().isAfter(event.end())) {
@@ -83,6 +91,62 @@ public class EventService {
         }
         eventRepository.deleteById(id);
     }
+    @Transactional
+    public void incrementWalkInCount(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
+        event.setWalkInCount(event.getWalkInCount() + 1);
+        eventRepository.save(event);
+    }
 
+    @Transactional
+    public void decrementWalkInCount(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
+        if (event.getWalkInCount() > 0) {
+            event.setWalkInCount(event.getWalkInCount() - 1);
+            eventRepository.save(event);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public EventDashboardResponse getEventDashboardData(Long eventId, User admin) {
+        double attendanceRate;
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
+        if (event.getUser().getId().equals(admin.getId())) {
+            long totalBookings = bookingRepository.countByEventIdAndBookingStatusNot(eventId, BookingStatus.CANCELLED);
+            long checkedInCount = bookingRepository.countByEventIdAndBookingStatus(eventId, BookingStatus.VALIDATED);
+            long noShowCount = totalBookings - checkedInCount;
+            if (totalBookings > 0) {
+                attendanceRate = (checkedInCount * 100.0) / totalBookings;
+            } else {
+                attendanceRate = 0;
+            }
+            double estimatedBookingRenueve = totalBookings * event.getBookingPrice();
+            long totalAttendees = checkedInCount + event.getWalkInCount();
+            double normalPrice = event.getNormalPrice() != null ? event.getNormalPrice() : 0.0;
+            double totalRevenue = (checkedInCount * event.getBookingPrice()) + (event.getWalkInCount() * normalPrice);
+            return new EventDashboardResponse(eventId , event.getName(), event.getTotalTickets(), totalBookings, checkedInCount, noShowCount, attendanceRate, estimatedBookingRenueve, event.getWalkInCount(), totalAttendees, totalRevenue);
+
+        } else {
+            throw new AccessDeniedException("You are not the owner of this event");
+        }
+
+    }
+
+    @Transactional
+    public void closeEvent(Long eventId, User admin) {
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
+        if (!event.getUser().getId().equals(admin.getId())) {
+            throw new AccessDeniedException("User is not authorized to close this event");
+        }
+        if (event.getEventState().equals(EventState.FINISHED)) {
+            throw new EventNotFoundException("Event is already closed with id: " + eventId);
+        }
+        event.setEventState(EventState.FINISHED);
+        eventRepository.save(event);
+        bookingService.anonymizeBookingsByEventId(eventId);
+    }
 
 }
