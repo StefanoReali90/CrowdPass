@@ -14,10 +14,12 @@ import org.spring.crowdpass.event.enums.EventState;
 import org.spring.crowdpass.event.exception.AccessDeniedException;
 import org.spring.crowdpass.event.exception.EventNotFoundException;
 import org.spring.crowdpass.event.repository.EventRepository;
+import org.spring.crowdpass.notification.service.EmailService;
 import org.spring.crowdpass.user.entity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +32,7 @@ public class BookingService {
     private final BookingMapper bookingMapper;
     private final EventRepository eventRepository;
     private final QrCodeService qrCodeService;
+    private final EmailService emailService;
 
     @Transactional
     public BookingResponse createBooking(BookingRequest bookingRequest) {
@@ -45,6 +48,7 @@ public class BookingService {
         booking.setEvent(event);
         Booking savedBooking = bookingRepository.save(booking);
         String qrCode = qrCodeService.createQrCode(savedBooking.getUuid().toString());
+        emailService.sendBookingConfirmation(savedBooking.getEmail(), savedBooking.getName(), event.getName(), qrCodeService.createQrCodeBytes(savedBooking.getUuid().toString()));
         return bookingMapper.toResponse(savedBooking, qrCode);
 
     }

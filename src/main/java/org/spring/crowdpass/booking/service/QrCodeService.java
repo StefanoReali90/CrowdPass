@@ -18,19 +18,20 @@ public class QrCodeService {
     private static final int HEIGHT = 300;
 
     public String createQrCode(String text) {
+        byte[] pngBytes = createQrCodeBytes(text);
+        String base64Image = Base64.getEncoder().encodeToString(pngBytes);
+        return "data:image/png;base64," + base64Image;
+    }
+
+    public byte[] createQrCodeBytes(String text) {
         try {
             QRCodeWriter qrCodeWriter = new QRCodeWriter();
             BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, WIDTH, HEIGHT);
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             MatrixToImageWriter.writeToStream(bitMatrix, "png", byteArrayOutputStream);
-            byte[] pngBytes = byteArrayOutputStream.toByteArray();
-            String base64Image = Base64.getEncoder().encodeToString(pngBytes);
-            return "data:image/png;base64," + base64Image;
+            return byteArrayOutputStream.toByteArray();
         } catch (WriterException | IOException e) {
             throw new RuntimeException(e);
-
-
-            // Implement QR code generation logic here
 
         }
     }
