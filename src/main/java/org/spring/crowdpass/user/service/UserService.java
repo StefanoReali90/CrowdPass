@@ -27,7 +27,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserDetailsService {
+public class UserService {
 
     private final UserRepository userRepository;
 
@@ -50,8 +50,8 @@ public class UserService implements UserDetailsService {
             throw new InvalidSecretKeyException("Invalid registration code");
         }
         User user = new User();
-        user.setNome(request.nome());
-        user.setCognome(request.cognome());
+        user.setName(request.name());
+        user.setSurname(request.surname());
         user.setEmail(request.email());
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setRole(Role.ADMIN);
@@ -68,8 +68,8 @@ public class UserService implements UserDetailsService {
             throw new EmailAlreadyExistsException("Email already exists");
         }
         User user = new User();
-        user.setNome(request.nome());
-        user.setCognome(request.cognome());
+        user.setName(request.name());
+        user.setSurname(request.surname());
         user.setEmail(request.email());
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setRole(Role.STAFF);
@@ -150,13 +150,6 @@ public class UserService implements UserDetailsService {
     public void deleteUser(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found"));
         userRepository.delete(user);
-    }
-
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     public LoginResponse login(@Valid LoginRequest request) {

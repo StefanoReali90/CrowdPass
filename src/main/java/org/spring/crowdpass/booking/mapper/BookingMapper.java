@@ -15,6 +15,7 @@ public class BookingMapper {
         booking.setSurname(bookingRequest.surname());
         booking.setEmail(bookingRequest.email());
         booking.setPhone(bookingRequest.phone());
+        booking.setMarketingConsent(bookingRequest.marketingConsent());
         return booking;
 
     }
@@ -29,7 +30,8 @@ public class BookingMapper {
                 booking.getEvent().getName(),
                 booking.getBookingStatus(),
                 booking.getCreatedAt(),
-                qrCodeBase64);
+                qrCodeBase64,
+                booking.getMarketingConsent());
         ;
         return bookingResponse;
     }

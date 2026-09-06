@@ -16,6 +16,7 @@ public record BookingRequest(
         String phone,
         @NotNull
         @Positive
-        Long eventId
+        Long eventId,
+        boolean marketingConsent
 ) {
 }

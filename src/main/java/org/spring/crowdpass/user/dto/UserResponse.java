@@ -1,8 +1,8 @@
 package org.spring.crowdpass.user.dto;
 
 public record UserResponse(
-        String nome,
-        String cognome,
+        String name,
+        String surname,
         String email,
         String role
 ) {
