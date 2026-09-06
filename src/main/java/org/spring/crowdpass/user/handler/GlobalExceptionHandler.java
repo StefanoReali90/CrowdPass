@@ -1,5 +1,6 @@
 package org.spring.crowdpass.user.handler;
 
+import lombok.extern.slf4j.Slf4j;
 import org.spring.crowdpass.user.exception.CrowdPassException;
 import org.spring.crowdpass.user.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.Instant;
 
 @RestControllerAdvice
-
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(CrowdPassException.class)
@@ -22,6 +23,7 @@ public class GlobalExceptionHandler {
                 ex.getStatus(),
                 ex.getMessage()
         );
+        log.warn("Business exception occurred - Status: {}, Message: {}", ex.getStatus(), ex.getMessage());
         problemDetail.setTitle("Errore");
         problemDetail.setProperty("timestamp", Instant.now());
         return problemDetail;
@@ -33,6 +35,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 ex.getMessage()
         );
+        log.error("Unhandled exception occurred: ", ex);
         problemDetail.setTitle("Errore interno");
         problemDetail.setProperty("timestamp", Instant.now());
         return problemDetail;
@@ -44,6 +47,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "Dati di input non validi"
         );
+        log.warn("Validation error on request: {}", problemDetail.getDetail());
         problemDetail.setTitle("Errore di validazione");
         problemDetail.setProperty("timestamp", Instant.now());
         problemDetail.setProperty("errors", ex.getBindingResult().getFieldErrors().stream()
@@ -59,6 +63,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.UNAUTHORIZED,
                 "Credenziali non valide"
         );
+        log.warn("Authentication failed: invalid credentials attempt");
         problemDetail.setTitle("Errore di autenticazione");
         problemDetail.setProperty("timestamp", Instant.now());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
