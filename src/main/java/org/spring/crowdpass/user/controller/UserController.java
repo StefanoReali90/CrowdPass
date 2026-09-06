@@ -4,7 +4,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.spring.crowdpass.user.dto.*;
 import org.spring.crowdpass.user.service.UserService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -74,6 +76,13 @@ public class UserController {
     @PostMapping(path = "/login", consumes = "application/json", produces = "application/json")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = userService.login(request);
-        return ResponseEntity.ok(response);
+        ResponseCookie cookie = ResponseCookie.from("jwt", response.token())
+                .httpOnly(true)
+                .path("/")
+                .maxAge(24 * 60 * 60) // 1 day
+                .build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(response);
     }
 }

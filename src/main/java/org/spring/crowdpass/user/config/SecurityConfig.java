@@ -44,7 +44,13 @@ public class SecurityConfig {
         http.csrf(csfr -> csfr.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+
                         .requestMatchers("/user/login", "/user/register", "/user/recover-password", "/user/reset-password").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/bookings", "/bookings/").permitAll()
                         .requestMatchers(HttpMethod.GET, "/bookings/{uuid}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/bookings/**").hasRole("ADMIN")
