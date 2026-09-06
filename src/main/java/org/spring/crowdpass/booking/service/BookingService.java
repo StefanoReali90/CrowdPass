@@ -1,6 +1,7 @@
 package org.spring.crowdpass.booking.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.spring.crowdpass.booking.dto.BookingRequest;
 import org.spring.crowdpass.booking.dto.BookingResponse;
 import org.spring.crowdpass.booking.dto.CheckInResponse;
@@ -27,6 +28,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BookingService {
 
     private final BookingRepository bookingRepository;
@@ -54,6 +56,7 @@ public class BookingService {
         if (bookingRequest.marketingConsent()) {
             marketingService.registerConsent(savedBooking.getName(), savedBooking.getSurname(), savedBooking.getEmail());
         }
+        log.info("Booking has been created successfully for event: {}, {}, booking: {}, {}", event.getId(), event.getName(), savedBooking.getId(), savedBooking.getUuid());
         return bookingMapper.toResponse(savedBooking, qrCode);
 
     }
@@ -110,6 +113,7 @@ public class BookingService {
                 .orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + bookingId));
         booking.setBookingStatus(BookingStatus.CANCELLED);
 
+        log.info("Booking has been cancelled successfully: {}", booking.getUuid());
     }
 
     @Transactional
@@ -119,12 +123,15 @@ public class BookingService {
             case CREATED:
                 booking.setBookingStatus((BookingStatus.VALIDATED));
                 booking.setCheckInDateTime(LocalDateTime.now());
+                log.info("Check-in successful for booking UUID: {}", uuid);
                 return bookingMapper.toCheckInResponse(booking);
             case VALIDATED:
+                log.warn("Check-in rejected - Booking UUID: {} was already validated at: {}", uuid, booking.getCheckInDateTime());
                 throw new AlreadyValidatedException("Booking already validated with uuid: " + uuid);
 
 
             case CANCELLED:
+                log.warn("Check-in rejected - Booking UUID: {} is cancelled", uuid);
                 throw new AlreadyCanceledException("Booking already canceled with uuid: " + uuid);
 
             default:
@@ -140,7 +147,9 @@ public class BookingService {
             booking.setSurname("ANONYMIZED");
             booking.setEmail("anon_" + booking.getUuid() + "@anonymized.local");
             booking.setPhone(null);
+
         }
+        log.info("GDPR Anonymization completed for event ID: {} - Total bookings anonymized: {}", eventId, bookings.size());
     }
 
 

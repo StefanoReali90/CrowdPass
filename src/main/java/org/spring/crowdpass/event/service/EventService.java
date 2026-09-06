@@ -1,6 +1,7 @@
 package org.spring.crowdpass.event.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.spring.crowdpass.booking.enums.BookingStatus;
 import org.spring.crowdpass.booking.repository.BookingRepository;
 import org.spring.crowdpass.booking.service.BookingService;
@@ -23,6 +24,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EventService {
 
     private final EventRepository eventRepository;
@@ -46,6 +48,7 @@ public class EventService {
         Event newEvent = eventMapper.toEntity(event);
         newEvent.setUser(admin);
         Event savedEvent = eventRepository.save(newEvent);
+        log.info("Event created successfully - ID: {}, Name: '{}', Created by Admin ID: {}", savedEvent.getId(), savedEvent.getName(), admin.getId());
         return eventMapper.toResponse(savedEvent);
     }
     @Transactional
@@ -96,6 +99,7 @@ public class EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
         event.setWalkInCount(event.getWalkInCount() + 1);
+        log.info("Walk-in attendee registered for Event ID: {} - New count: {}", eventId, event.getWalkInCount());
         eventRepository.save(event);
     }
 
@@ -146,6 +150,7 @@ public class EventService {
         }
         event.setEventState(EventState.FINISHED);
         eventRepository.save(event);
+        log.info("Event ID: {} closed by Admin ID: {} - Transitioned to FINISHED", eventId, admin.getId());
         bookingService.anonymizeBookingsByEventId(eventId);
     }
 
