@@ -16,7 +16,8 @@ public record BookingResponse(
         String eventName,
         BookingStatus bookingStatus,
         LocalDateTime createdAt,
-        String qrCodeBase64
+        String qrCodeBase64,
+        boolean marketingConsent
 
 ) {
 }

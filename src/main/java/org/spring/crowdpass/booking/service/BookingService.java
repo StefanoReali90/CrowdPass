@@ -14,6 +14,7 @@ import org.spring.crowdpass.event.enums.EventState;
 import org.spring.crowdpass.event.exception.AccessDeniedException;
 import org.spring.crowdpass.event.exception.EventNotFoundException;
 import org.spring.crowdpass.event.repository.EventRepository;
+import org.spring.crowdpass.marketing.service.MarketingService;
 import org.spring.crowdpass.notification.service.EmailService;
 import org.spring.crowdpass.user.entity.User;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ public class BookingService {
     private final EventRepository eventRepository;
     private final QrCodeService qrCodeService;
     private final EmailService emailService;
+    private final MarketingService marketingService;
 
     @Transactional
     public BookingResponse createBooking(BookingRequest bookingRequest) {
@@ -49,6 +51,9 @@ public class BookingService {
         Booking savedBooking = bookingRepository.save(booking);
         String qrCode = qrCodeService.createQrCode(savedBooking.getUuid().toString());
         emailService.sendBookingConfirmation(savedBooking.getEmail(), savedBooking.getName(), event.getName(), qrCodeService.createQrCodeBytes(savedBooking.getUuid().toString()));
+        if (bookingRequest.marketingConsent()) {
+            marketingService.registerConsent(savedBooking.getName(), savedBooking.getSurname(), savedBooking.getEmail());
+        }
         return bookingMapper.toResponse(savedBooking, qrCode);
 
     }
