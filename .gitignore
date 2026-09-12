@@ -37,6 +37,6 @@ build/
 *.env
 
 ### Logs ###
-    logs/
-    *.log
-    *.log.gz
+logs/
+*.log
+*.log.gz
