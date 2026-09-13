@@ -14,6 +14,7 @@ import org.spring.crowdpass.booking.exception.*;
 import org.spring.crowdpass.booking.mapper.BookingMapper;
 import org.spring.crowdpass.booking.repository.BookingRepository;
 import org.spring.crowdpass.event.entity.Event;
+import org.spring.crowdpass.event.enums.EventState;
 import org.spring.crowdpass.event.exception.EventNotFoundException;
 import org.spring.crowdpass.event.repository.EventRepository;
 import org.spring.crowdpass.marketing.service.MarketingService;
@@ -55,11 +56,14 @@ public class BookingServiceTest {
     @Test
     void testCheckIn() {
         UUID bookingId = UUID.randomUUID();
+        Event event = new Event();
+        event.setEventState(EventState.WAITING);
         Booking booking = new Booking();
         CheckInResponse expectedResponse = new CheckInResponse("Concerto", "Mario", "Rossi");
         booking.setUuid(bookingId);
         booking.setBookingStatus(BookingStatus.CREATED);
         booking.setCheckInDateTime(null);
+        booking.setEvent(event);
         when(bookingRepository.findByUuid(bookingId)).thenReturn(Optional.of(booking));
         when(bookingMapper.toCheckInResponse(booking)).thenReturn(expectedResponse);
         CheckInResponse response = bookingService.checkInBooking(bookingId);
@@ -73,10 +77,13 @@ public class BookingServiceTest {
 
     @Test
     void testCheckIn_WhenAlreadyValidated_ShouldThrowException() {
+        Event event = new Event();
+        event.setEventState(EventState.WAITING);
         UUID bookingId = UUID.randomUUID();
         Booking booking = new Booking();
         booking.setUuid(bookingId);
         booking.setBookingStatus(BookingStatus.VALIDATED);
+        booking.setEvent(event);
         when(bookingRepository.findByUuid(bookingId)).thenReturn(Optional.of(booking));
         assertThrows(AlreadyValidatedException.class, () -> bookingService.checkInBooking(bookingId));
         verify(bookingRepository, times(1)).findByUuid(bookingId);
@@ -93,10 +100,13 @@ public class BookingServiceTest {
 
     @Test
     void checkin_bookingCanceled_ShouldThrowException() {
+        Event event = new Event();
+        event.setEventState(EventState.WAITING);
         UUID uuid = UUID.randomUUID();
         Booking booking = new Booking();
         booking.setUuid(uuid);
         booking.setBookingStatus(BookingStatus.CANCELLED);
+        booking.setEvent(event);
         when(bookingRepository.findByUuid(uuid)).thenReturn(Optional.of(booking));
         assertThrows(AlreadyCanceledException.class, () -> bookingService.checkInBooking(uuid));
         verify(bookingRepository, times(1)).findByUuid(uuid);
@@ -190,6 +200,21 @@ public class BookingServiceTest {
         assertEquals("anon_" + booking.getUuid() + "@anonymized.local", booking.getEmail());
         assertNull(booking.getPhone());
         verify(bookingRepository, times(1)).findAllByEventId(eventId);
+    }
+
+    @Test
+    void testCheckIn_WhenEventFinished_ShouldThrowException() {
+        UUID bookingId = UUID.randomUUID();
+        Event event = new Event();
+        event.setEventState(EventState.FINISHED);
+        Booking booking = new Booking();
+        booking.setUuid(bookingId);
+        booking.setBookingStatus(BookingStatus.CREATED);
+        booking.setCheckInDateTime(null);
+        booking.setEvent(event);
+        when(bookingRepository.findByUuid(bookingId)).thenReturn(Optional.of(booking));
+        assertThrows(EventFinishedException.class, () -> bookingService.checkInBooking(bookingId));
+        verify(bookingRepository, times(1)).findByUuid(bookingId);
     }
 }
 

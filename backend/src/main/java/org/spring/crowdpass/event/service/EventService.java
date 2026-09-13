@@ -3,6 +3,7 @@ package org.spring.crowdpass.event.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.spring.crowdpass.booking.enums.BookingStatus;
+import org.spring.crowdpass.booking.exception.EventFinishedException;
 import org.spring.crowdpass.booking.repository.BookingRepository;
 import org.spring.crowdpass.booking.service.BookingService;
 import org.spring.crowdpass.event.dto.EventDashboardResponse;
@@ -98,6 +99,9 @@ public class EventService {
     public void incrementWalkInCount(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
+        if(event.getEventState().equals(EventState.FINISHED)) {
+            throw new EventFinishedException("Cannot register walk-in attendee for a finished event");
+        }
         event.setWalkInCount(event.getWalkInCount() + 1);
         log.info("Walk-in attendee registered for Event ID: {} - New count: {}", eventId, event.getWalkInCount());
         eventRepository.save(event);
@@ -107,6 +111,9 @@ public class EventService {
     public void decrementWalkInCount(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
+        if(event.getEventState().equals(EventState.FINISHED)) {
+            throw new EventFinishedException("Cannot register walk-in attendee for a finished event");
+        }
         if (event.getWalkInCount() > 0) {
             event.setWalkInCount(event.getWalkInCount() - 1);
             eventRepository.save(event);
@@ -146,7 +153,7 @@ public class EventService {
             throw new AccessDeniedException("User is not authorized to close this event");
         }
         if (event.getEventState().equals(EventState.FINISHED)) {
-            throw new EventNotFoundException("Event is already closed with id: " + eventId);
+            throw new EventFinishedException("Event is already closed with id: " + eventId);
         }
         event.setEventState(EventState.FINISHED);
         eventRepository.save(event);

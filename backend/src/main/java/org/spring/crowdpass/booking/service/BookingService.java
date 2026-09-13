@@ -12,16 +12,14 @@ import org.spring.crowdpass.booking.mapper.BookingMapper;
 import org.spring.crowdpass.booking.repository.BookingRepository;
 import org.spring.crowdpass.event.entity.Event;
 import org.spring.crowdpass.event.enums.EventState;
-import org.spring.crowdpass.event.exception.AccessDeniedException;
 import org.spring.crowdpass.event.exception.EventNotFoundException;
 import org.spring.crowdpass.event.repository.EventRepository;
 import org.spring.crowdpass.marketing.service.MarketingService;
 import org.spring.crowdpass.notification.service.EmailService;
-import org.spring.crowdpass.user.entity.User;
+import org.spring.crowdpass.booking.exception.EventFinishedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -43,12 +41,16 @@ public class BookingService {
         Booking booking = bookingMapper.toEntity(bookingRequest);
         Event event = eventRepository.findById(bookingRequest.eventId())
                 .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + bookingRequest.eventId()));
+        if (event.getEventState() == EventState.FINISHED) {
+            throw new EventFinishedException("Event is finished and no more bookings are allowed");
+        }
         if (bookingRepository.existsByEventIdAndEmailAndBookingStatusNot(bookingRequest.eventId(), bookingRequest.email(), BookingStatus.CANCELLED)) {
             throw new AlreadyBookedException("Booking already exists for this event and email");
         }
         if (bookingRepository.countByEventIdAndBookingStatusNot(event.getId(), BookingStatus.CANCELLED) >= event.getTotalTickets()) {
             throw new NoTicketException("No more tickets available for this event");
         }
+
         booking.setEvent(event);
         Booking savedBooking = bookingRepository.save(booking);
         String qrCode = qrCodeService.createQrCode(savedBooking.getUuid().toString());
@@ -119,6 +121,9 @@ public class BookingService {
     @Transactional
     public CheckInResponse checkInBooking(UUID uuid) {
         Booking booking = bookingRepository.findByUuid(uuid).orElseThrow(() -> new BookingNotFoundException("Booking not found with uuid: " + uuid));
+        if (booking.getEvent() != null && booking.getEvent().getEventState() == EventState.FINISHED) {
+            throw new EventFinishedException("Event is finished and check-in is not allowed");
+        }
         switch (booking.getBookingStatus()) {
             case CREATED:
                 booking.setBookingStatus((BookingStatus.VALIDATED));
