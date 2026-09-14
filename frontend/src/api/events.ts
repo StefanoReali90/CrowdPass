@@ -19,7 +19,7 @@ export async function incrementWalkInCount(eventId: number): Promise<void> {
     });
 }
 export async function decrementWalkInCount(eventId: number): Promise<void> {
-    await apiFetch<void>(`/events/${eventId}/walk-in`, {
+    await apiFetch<void>(`/events/${eventId}/walk-in/decrement`, {
         method: 'PATCH',
     });
 }

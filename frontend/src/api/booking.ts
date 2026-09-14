@@ -13,7 +13,8 @@ export async function getBookingByUUID(uuid: string): Promise<BookingResponse> {
 }
 
 export async function checkInBooking(uuid: string): Promise<CheckInResponse> {
-    return await apiFetch<CheckInResponse>(`/bookings/${uuid}/check-in`, {
+    return await apiFetch<CheckInResponse>(`/bookings/check-in/${uuid}`, {
         method: 'PATCH',
     });
 }
+
