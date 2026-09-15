@@ -1,23 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useState, type ReactNode } from 'react';
+import { BackgroundContext } from './background-context';
 
-interface BackgroundContextType {
-    backgroundImage: string | null;
-    setBackgroundImage: (url: string | null) => void;
-    uploadBackgroundFile: (file: File) => Promise<void>;
-    resetBackground: () => void;
-}
-
-const BackgroundContext = createContext<BackgroundContextType | undefined>(undefined);
-
-export const BackgroundProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [backgroundImage, setBg] = useState<string | null>(null);
-
-    useEffect(() => {
-        const savedBg = localStorage.getItem('crowdpass_custom_bg');
-        if (savedBg) {
-            setBg(savedBg);
-        }
-    }, []);
+export function BackgroundProvider({ children }: { children: ReactNode }) {
+    const [backgroundImage, setBg] = useState<string | null>(() => localStorage.getItem('crowdpass_custom_bg'));
 
     const setBackgroundImage = (url: string | null) => {
         if (url) {
@@ -56,12 +41,4 @@ export const BackgroundProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             {children}
         </BackgroundContext.Provider>
     );
-};
-
-export const useBackground = () => {
-    const context = useContext(BackgroundContext);
-    if (!context) {
-        throw new Error('useBackground must be used within a BackgroundProvider');
-    }
-    return context;
-};
+}

@@ -53,8 +53,14 @@ public class EventService {
         return eventMapper.toResponse(savedEvent);
     }
     @Transactional
-    public EventResponse updateEvent(EventRequest event, Long Id) {
+    public EventResponse updateEvent(EventRequest event, Long Id, User admin) {
         Event existingEvent = eventRepository.findById(Id).orElseThrow(() -> new EventNotFoundException("Event not found with id: " + Id));
+        if(!existingEvent.getUser().getId().equals(admin.getId())) {
+            throw new AccessDeniedException("User is not authorized to update this event");
+        }
+        if(existingEvent.getEventState().equals(EventState.FINISHED)) {
+            throw new EventFinishedException("Cannot update a finished event");
+        }
         validateEventDates(event);
         existingEvent.setName(event.name());
         existingEvent.setDescription(event.description());
@@ -89,16 +95,23 @@ public class EventService {
     }
 
     @Transactional
-    public void deleteEventById(Long id) {
-        if (!eventRepository.existsById(id)) {
-            throw new EventNotFoundException("Event not found with id: " + id);
+    public void deleteEventById(Long id, User admin) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException("Event not found with id: " + id));
+        if(!event.getUser().getId().equals(admin.getId())) {
+            throw new AccessDeniedException("User is not authorized to delete this event");
+        }
+        if(event.getEventState().equals(EventState.FINISHED)) {
+            throw new EventFinishedException("Cannot delete a finished event");
         }
         eventRepository.deleteById(id);
     }
     @Transactional
-    public void incrementWalkInCount(Long eventId) {
+    public void incrementWalkInCount(Long eventId, User admin) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
+        if(!event.getUser().getId().equals(admin.getId())) {
+            throw new AccessDeniedException("User is not authorized to register walk-in attendee for this event");
+        }
         if(event.getEventState().equals(EventState.FINISHED)) {
             throw new EventFinishedException("Cannot register walk-in attendee for a finished event");
         }
@@ -108,9 +121,12 @@ public class EventService {
     }
 
     @Transactional
-    public void decrementWalkInCount(Long eventId) {
+    public void decrementWalkInCount(Long eventId, User admin) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
+        if(!event.getUser().getId().equals(admin.getId())) {
+            throw new AccessDeniedException("User is not authorized to decrement walk-in attendee count for this event");
+        }
         if(event.getEventState().equals(EventState.FINISHED)) {
             throw new EventFinishedException("Cannot register walk-in attendee for a finished event");
         }

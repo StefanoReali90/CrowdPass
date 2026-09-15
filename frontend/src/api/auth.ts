@@ -24,3 +24,10 @@ export async function logout(): Promise<void> {
         method: 'POST',
     });
 }
+
+export async function registerAdmin(data: import('../types').AdminRegisterRequest): Promise<User> {
+    return await apiFetch<User>('/user/register', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}

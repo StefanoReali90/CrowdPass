@@ -2,7 +2,7 @@ import { apiFetch } from './client';
 import type { BookingRequest, BookingResponse, CheckInResponse } from '../types';
 
 export async function createBooking(data: BookingRequest): Promise<BookingResponse> {
-    return await apiFetch<BookingResponse>('/bookings', {
+    return await apiFetch<BookingResponse>('/bookings/', {
         method: 'POST',
         body: JSON.stringify(data),
     });

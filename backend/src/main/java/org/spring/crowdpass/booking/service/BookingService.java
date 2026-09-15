@@ -12,11 +12,14 @@ import org.spring.crowdpass.booking.mapper.BookingMapper;
 import org.spring.crowdpass.booking.repository.BookingRepository;
 import org.spring.crowdpass.event.entity.Event;
 import org.spring.crowdpass.event.enums.EventState;
+import org.spring.crowdpass.event.exception.AccessDeniedException;
 import org.spring.crowdpass.event.exception.EventNotFoundException;
 import org.spring.crowdpass.event.repository.EventRepository;
 import org.spring.crowdpass.marketing.service.MarketingService;
 import org.spring.crowdpass.notification.service.EmailService;
 import org.spring.crowdpass.booking.exception.EventFinishedException;
+import org.spring.crowdpass.user.entity.User;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +40,7 @@ public class BookingService {
     private final MarketingService marketingService;
 
     @Transactional
+    @Async
     public BookingResponse createBooking(BookingRequest bookingRequest) {
         Booking booking = bookingMapper.toEntity(bookingRequest);
         Event event = eventRepository.findById(bookingRequest.eventId())
@@ -64,21 +68,34 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public BookingResponse getBookingByUuid(UUID uuid) {
+    public BookingResponse getBookingByUuid(UUID uuid, User admin) {
         Booking booking = bookingRepository.findByUuid(uuid)
                 .orElseThrow(() -> new BookingNotFoundException("Booking not found with uuid: " + uuid));
+        Event event = booking.getEvent();
+        if(event.getUser() == null || !event.getUser().getId().equals(admin.getId())) {
+            throw new AccessDeniedException("User is not authorized to view this booking");
+        }
         return bookingMapper.toResponse(booking, qrCodeService.createQrCode(booking.getUuid().toString()));
     }
 
     @Transactional(readOnly = true)
-    public BookingResponse getBookingById(Long bookingId) {
+    public BookingResponse getBookingById(Long bookingId, User admin) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + bookingId));
+        Event event = booking.getEvent();
+        if(event.getUser() == null || !event.getUser().getId().equals(admin.getId())) {
+            throw new AccessDeniedException("User is not authorized to view this booking");
+        }
         return bookingMapper.toResponse(booking, qrCodeService.createQrCode(booking.getUuid().toString()));
     }
 
     @Transactional(readOnly = true)
-    public List<BookingResponse> getBookingsByEventId(Long eventId) {
+    public List<BookingResponse> getBookingsByEventId(Long eventId, User admin) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
+        if (event.getUser() == null || !event.getUser().getId().equals(admin.getId())) {
+            throw new AccessDeniedException("User is not authorized to view bookings for this event");
+        }
         List<Booking> bookings = bookingRepository.findAllByEventId(eventId);
         return bookings.stream()
                 .map(booking -> bookingMapper.toResponse(booking, qrCodeService.createQrCode(booking.getUuid().toString())))
@@ -86,15 +103,20 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public List<BookingResponse> getBookingsByEmail(String email) {
-        List<Booking> findAllByEmail = bookingRepository.findAllByEmail(email);
-        return findAllByEmail.stream()
+    public List<BookingResponse> getBookingsByEmail(String email, User admin) {
+        List<Booking> bookings = bookingRepository.findAllByEmailAndEvent_User_Id(email, admin.getId());
+        return bookings.stream()
                 .map(booking -> bookingMapper.toResponse(booking, qrCodeService.createQrCode(booking.getUuid().toString())))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<BookingResponse> getBookingsByEventIdAndEmail(Long eventId, String email) {
+    public List<BookingResponse> getBookingsByEventIdAndEmail(Long eventId, String email, User admin) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
+        if (event.getUser() == null || !event.getUser().getId().equals(admin.getId())) {
+            throw new AccessDeniedException("User is not authorized to view bookings for this event");
+        }
         List<Booking> bookings = bookingRepository.findAllByEventIdAndEmail(eventId, email);
         return bookings.stream()
                 .map(booking -> bookingMapper.toResponse(booking, qrCodeService.createQrCode(booking.getUuid().toString())))
@@ -102,17 +124,26 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public List<BookingResponse> getAllBookings() {
-        List<Booking> bookings = bookingRepository.findAll();
+    public List<BookingResponse> getAllBookings(User admin) {
+        List<Booking> bookings = bookingRepository.findAllByEvent_User_Id(admin.getId());
         return bookings.stream()
                 .map(booking -> bookingMapper.toResponse(booking, qrCodeService.createQrCode(booking.getUuid().toString())))
                 .toList();
     }
 
     @Transactional
-    public void deleteBooking(Long bookingId) {
+    public void deleteBooking(Long bookingId, User admin) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + bookingId));
+        if(booking.getEvent() == null || booking.getEvent().getUser() == null) {
+            throw new AccessDeniedException("User is not authorized to cancel this booking");
+        }
+        if(!booking.getEvent().getUser().getId().equals(admin.getId())) {
+            throw new AccessDeniedException("User is not authorized to cancel this booking");
+        }
+        if (booking.getBookingStatus() == BookingStatus.CANCELLED) {
+            throw new AlreadyCanceledException("Booking already canceled with id: " + bookingId);
+        }
         booking.setBookingStatus(BookingStatus.CANCELLED);
 
         log.info("Booking has been cancelled successfully: {}", booking.getUuid());
@@ -120,7 +151,7 @@ public class BookingService {
 
     @Transactional
     public CheckInResponse checkInBooking(UUID uuid) {
-        Booking booking = bookingRepository.findByUuid(uuid).orElseThrow(() -> new BookingNotFoundException("Booking not found with uuid: " + uuid));
+        Booking booking = bookingRepository.findForCheckInByUuid(uuid).orElseThrow(() -> new BookingNotFoundException("Booking not found with uuid: " + uuid));
         if (booking.getEvent() != null && booking.getEvent().getEventState() == EventState.FINISHED) {
             throw new EventFinishedException("Event is finished and check-in is not allowed");
         }

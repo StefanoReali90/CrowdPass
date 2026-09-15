@@ -1,68 +1,27 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+﻿import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import { Brand } from './components/Brand';
 import { AuthProvider } from './context/AuthContext';
-import { BackgroundProvider, useBackground } from './context/BackgroundContext';
 import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { BookingPage } from './pages/BookingPage';
 import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 import { StaffScanPage } from './pages/StaffScanPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import './App.css';
-
-function AppLayout() {
-    const { backgroundImage } = useBackground();
-
-    return (
-        <div
-            className="app-backdrop"
-            style={backgroundImage ? { backgroundImage: `url(${backgroundImage})` } : undefined}
-        >
-            <div className="app-overlay d-flex flex-column min-vh-100">
-                <Navbar />
-                <main className="flex-grow-1">
-                    <Routes>
-                        {/* Rotta Pubblica: Prenotazione Biglietti Cliente */}
-                        <Route path="/" element={<BookingPage />} />
-                        
-                        {/* Rotta Pubblica: Login per Staff e Admin */}
-                        <Route path="/login" element={<LoginPage />} />
-
-                        {/* Rotta Protetta: Scanner Ingressi (Accessibile sia a STAFF che ad ADMIN) */}
-                        <Route
-                            path="/staff/scan"
-                            element={
-                                <ProtectedRoute roles={['STAFF', 'ADMIN']}>
-                                    <StaffScanPage />
-                                </ProtectedRoute>
-                            }
-                        />
-
-                        {/* Rotta Protetta: Dashboard Statistiche Evento (Riservata ad ADMIN) */}
-                        <Route
-                            path="/admin/dashboard"
-                            element={
-                                <ProtectedRoute roles={['ADMIN']}>
-                                    <AdminDashboardPage />
-                                </ProtectedRoute>
-                            }
-                        />
-                    </Routes>
-                </main>
-            </div>
-        </div>
-    );
+function InternalLayout() {
+ return <><Navbar /><main><Outlet /></main></>;
 }
-
-function App() {
-    return (
-        <BrowserRouter>
-            <AuthProvider>
-                <BackgroundProvider>
-                    <AppLayout />
-                </BackgroundProvider>
-            </AuthProvider>
-        </BrowserRouter>
-    );
+export default function App() {
+ return <BrowserRouter><AuthProvider><div className="app-shell"><Routes>
+ <Route element={<InternalLayout />}>
+ <Route path="/" element={<LoginPage />} /><Route path="/login" element={<LoginPage />} /><Route path="/register" element={<RegisterPage />} />
+ <Route path="/staff/scan" element={<ProtectedRoute roles={['ADMIN', 'STAFF']}><StaffScanPage /></ProtectedRoute>} />
+ <Route path="/admin/dashboard" element={<ProtectedRoute roles={['ADMIN']}><AdminDashboardPage /></ProtectedRoute>} />
+ </Route>
+ <Route element={<><header className="topbar"><Brand /></header><main><Outlet /></main></>}>
+ <Route path="/prenota" element={<BookingPage />} /><Route path="/check-in" element={<BookingPage />} />
+ <Route path="*" element={<div className="form-page"><span className="eyebrow">404</span><h1>Pagina non trovata.</h1><p>Controlla il link che hai ricevuto.</p></div>} />
+ </Route>
+ </Routes><footer className="site-footer"><span>CrowdPass</span><span>Il tuo evento, dall’inizio all’ingresso.</span></footer></div></AuthProvider></BrowserRouter>;
 }
-
-export default App;

@@ -72,7 +72,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/bookings", "/bookings/").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/bookings/{uuid}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/bookings/{uuid}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/bookings/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/user/staff-register").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/user/**").hasRole("ADMIN")
@@ -85,7 +85,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/events/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/events/my-events").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/bookings/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/events/{id}/walk-in", "/events/{id}/walk-in/decrement").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.PATCH, "/events/{id}/walk-in", "/events/{id}/walk-in/decrement").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/bookings/check-in/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers(HttpMethod.GET, "/events/*/dashboard", "/events/{id}/dashboard").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/events/*/close", "/events/{id}/close").hasRole("ADMIN")

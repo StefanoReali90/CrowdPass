@@ -19,6 +19,7 @@ import org.spring.crowdpass.event.exception.EventNotFoundException;
 import org.spring.crowdpass.event.repository.EventRepository;
 import org.spring.crowdpass.marketing.service.MarketingService;
 import org.spring.crowdpass.notification.service.EmailService;
+import org.spring.crowdpass.user.entity.User;
 
 import java.util.List;
 import java.util.Optional;
@@ -179,10 +180,15 @@ public class BookingServiceTest {
     void deleteBooking() {
         Long bookingId = 1L;
         Booking booking = new Booking();
+        User user = new User();
+        user.setId(1L);
+        Event event = new Event();
+        event.setUser(user);
+        booking.setEvent(event);
         booking.setId(bookingId);
         booking.setBookingStatus(BookingStatus.CREATED);
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
-        bookingService.deleteBooking(bookingId);
+        bookingService.deleteBooking(bookingId, user);
         assertEquals(BookingStatus.CANCELLED, booking.getBookingStatus());
         verify(bookingRepository, times(1)).findById(bookingId);
     }

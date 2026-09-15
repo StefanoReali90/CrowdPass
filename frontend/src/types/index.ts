@@ -15,7 +15,6 @@ export interface Event {
     bookingPrice: number;
     normalPrice: number;
     totalTickets: number;
-    walkInCount: number;
     eventState: 'WAITING' | 'IN_PROGRESS' | 'FINISHED';
     imageUrl: string;
 }
@@ -30,13 +29,17 @@ export interface BookingRequest {
 }
 
 export interface BookingResponse {
-    id: number;
     uuid: string;
     name: string;
     surname: string;
     email: string;
-    qrCode: string;
-    bookingStatus: string;
+    phone: string | null;
+    eventId: number;
+    eventName: string;
+    bookingStatus: 'CREATED' | 'VALIDATED' | 'CANCELLED';
+    createdAt: string;
+    qrCodeBase64: string;
+    marketingConsent: boolean;
 }
 
 export interface CheckInResponse {
@@ -57,4 +60,24 @@ export interface EventDashboardResponse {
     walkInCount: number;
     totalAttendees: number;
     totalRevenue: number;
+}
+
+export interface AdminRegisterRequest {
+    name: string;
+    surname: string;
+    email: string;
+    password: string;
+    registrationCode: string;
+}
+
+export interface CreateEventRequest {
+    name: string;
+    description: string;
+    location: string;
+    start: string;
+    end: string;
+    imageUrl: string;
+    totalTickets: number;
+    normalPrice: number;
+    bookingPrice: number;
 }

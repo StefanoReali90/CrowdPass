@@ -6,6 +6,7 @@ import org.spring.crowdpass.user.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -32,8 +33,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGenericException(Exception ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                ex.getMessage()
+                HttpStatus.INTERNAL_SERVER_ERROR,"Si è verificato un errore interno"
         );
         log.error("Unhandled exception occurred: ", ex);
         problemDetail.setTitle("Errore interno");
@@ -67,6 +67,17 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Errore di autenticazione");
         problemDetail.setProperty("timestamp", Instant.now());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
+    }
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ProblemDetail> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "Dati di input non validi"
+        );
+        log.warn("Malformed JSON request: {}", problemDetail.getDetail());
+        problemDetail.setTitle("Errore di parsing JSON");
+        problemDetail.setProperty("timestamp", Instant.now());
+        return ResponseEntity.badRequest().body(problemDetail);
     }
 
 }

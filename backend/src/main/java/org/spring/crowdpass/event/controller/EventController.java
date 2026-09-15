@@ -30,8 +30,8 @@ public class EventController {
     }
 
     @PutMapping(path = "/{id}", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<EventResponse> updateEvent(@PathVariable Long id, @Valid @RequestBody EventRequest eventRequest) {
-        EventResponse eventResponse = eventService.updateEvent(eventRequest, id);
+    public ResponseEntity<EventResponse> updateEvent(@PathVariable Long id, @Valid @RequestBody EventRequest eventRequest, @AuthenticationPrincipal User admin) {
+        EventResponse eventResponse = eventService.updateEvent(eventRequest, id, admin);
         return ResponseEntity.status(HttpStatus.OK).body(eventResponse);
 
 
@@ -43,7 +43,7 @@ public class EventController {
         return ResponseEntity.ok(eventResponse);
     }
 
-    @GetMapping(path = "/", produces = "application/json")
+    @GetMapping(path = "", produces = "application/json")
     public ResponseEntity<List<EventResponse>> getAllEvents() {
         List<EventResponse> eventResponses = eventService.getAllEvents();
         return ResponseEntity.ok(eventResponses);
@@ -63,20 +63,20 @@ public class EventController {
     }
 
     @DeleteMapping(path = "/{id}")
-    public ResponseEntity<Void> deleteEvent(@PathVariable Long id) {
-        eventService.deleteEventById(id);
+    public ResponseEntity<Void> deleteEvent(@PathVariable Long id, @AuthenticationPrincipal User admin) {
+        eventService.deleteEventById(id, admin);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping(path = "/{id}/walk-in")
-    public ResponseEntity<Void> incrementWalkInCount(@PathVariable Long id) {
-        eventService.incrementWalkInCount(id);
+    public ResponseEntity<Void> incrementWalkInCount(@PathVariable Long id, @AuthenticationPrincipal User admin) {
+        eventService.incrementWalkInCount(id,admin);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping(path = "/{id}/walk-in/decrement")
-    public ResponseEntity<Void> decrementWalkInCount(@PathVariable Long id) {
-        eventService.decrementWalkInCount(id);
+    public ResponseEntity<Void> decrementWalkInCount(@PathVariable Long id, @AuthenticationPrincipal User admin) {
+        eventService.decrementWalkInCount(id, admin);
         return ResponseEntity.noContent().build();
     }
 
