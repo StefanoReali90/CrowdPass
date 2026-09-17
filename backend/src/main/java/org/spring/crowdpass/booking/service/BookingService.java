@@ -40,7 +40,6 @@ public class BookingService {
     private final MarketingService marketingService;
 
     @Transactional
-    @Async
     public BookingResponse createBooking(BookingRequest bookingRequest) {
         Booking booking = bookingMapper.toEntity(bookingRequest);
         Event event = eventRepository.findById(bookingRequest.eventId())

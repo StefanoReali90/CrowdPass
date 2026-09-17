@@ -1,20 +1,43 @@
 import { apiFetch } from './client';
 import type { BookingRequest, BookingResponse, CheckInResponse } from '../types';
 
-export async function createBooking(data: BookingRequest): Promise<BookingResponse> {
-    return await apiFetch<BookingResponse>('/bookings/', {
+const segment = (value: string) => encodeURIComponent(value.trim());
+
+export function createBooking(data: BookingRequest): Promise<BookingResponse> {
+    return apiFetch<BookingResponse>('/bookings/', {
         method: 'POST',
         body: JSON.stringify(data),
     });
 }
 
-export async function getBookingByUUID(uuid: string): Promise<BookingResponse> {
-    return await apiFetch<BookingResponse>(`/bookings/${uuid}`);
+export function getBookingByUUID(uuid: string): Promise<BookingResponse> {
+    return apiFetch<BookingResponse>(`/bookings/${segment(uuid)}`);
 }
 
-export async function checkInBooking(uuid: string): Promise<CheckInResponse> {
-    return await apiFetch<CheckInResponse>(`/bookings/check-in/${uuid}`, {
-        method: 'PATCH',
-    });
+export function getBookingsByEventId(eventId: number): Promise<BookingResponse[]> {
+    return apiFetch<BookingResponse[]>(`/bookings/events/${eventId}`);
 }
 
+export function getBookingsByEmail(email: string): Promise<BookingResponse[]> {
+    return apiFetch<BookingResponse[]>(`/bookings/email/${segment(email)}`);
+}
+
+export function getBookingsByEventAndEmail(eventId: number, email: string): Promise<BookingResponse[]> {
+    return apiFetch<BookingResponse[]>(`/bookings/event/${eventId}/email/${segment(email)}`);
+}
+
+export function getBookingById(bookingId: number): Promise<BookingResponse> {
+    return apiFetch<BookingResponse>(`/bookings/bookingId/${bookingId}`);
+}
+
+export function getBookings(): Promise<BookingResponse[]> {
+    return apiFetch<BookingResponse[]>('/bookings/');
+}
+
+export function checkInBooking(uuid: string): Promise<CheckInResponse> {
+    return apiFetch<CheckInResponse>(`/bookings/check-in/${segment(uuid)}`, { method: 'PATCH' });
+}
+
+export function cancelBooking(bookingId: number): Promise<void> {
+    return apiFetch<void>(`/bookings/${bookingId}`, { method: 'DELETE' });
+}
