@@ -1,0 +1,20 @@
+ ### 1. Login Admin
+    POST http://localhost:8080/user/login
+    Content-Type: application/json
+
+    {
+      "email": "admin@example.com",
+      "password": "password123"
+    }
+
+    > {%
+        client.global.set("auth_token", response.body.token);
+    %}
+
+    ### 2. Recupera i miei eventi (usa il token in automatico!)
+    GET http://localhost:8080/events/my-events
+    Authorization: Bearer {{auth_token}}
+
+    ### 3. Check-in (usa il token in automatico!)
+    PATCH http://localhost:8080/bookings/check-in/8a2e1d23-...
+    Authorization: Bearer {{auth_token}}
