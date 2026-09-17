@@ -1,39 +1,33 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
+import { RefreshCw, WifiOff } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
+import type { UserRole } from '../types';
 
 interface ProtectedRouteProps {
-    children: React.ReactNode;
-    roles?: Array<'ADMIN' | 'STAFF'>;
+    children: ReactNode;
+    roles?: UserRole[];
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles }) => {
-    const { user, isLoading } = useAuth();
+export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
+    const { user, isLoading, authError, retrySession } = useAuth();
 
     if (isLoading) {
+        return <div className="route-loader" role="status"><span className="spinner" />Caricamento sessione…</div>;
+    }
+    if (authError) {
         return (
-            <div className="d-flex justify-content-center align-items-center py-5">
-                <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Caricamento...</span>
-                </div>
+            <div className="service-unavailable" role="alert">
+                <WifiOff size={30} />
+                <h1>Server non disponibile</h1>
+                <p>{authError}</p>
+                <button className="button primary" onClick={() => void retrySession()}><RefreshCw size={16} /> Riprova</button>
             </div>
         );
     }
-
-    if (!user) {
-        return <Navigate to="/login" replace />;
-    }
-
+    if (!user) return <Navigate to="/login" replace />;
     if (roles && !roles.includes(user.role)) {
-        return (
-            <div className="container py-5 text-center">
-                <div className="alert alert-danger mx-auto" style={{ maxWidth: '500px' }}>
-                    <h4 className="alert-heading">Accesso Negato</h4>
-                    <p className="mb-0">Non hai i permessi necessari per visualizzare questa pagina.</p>
-                </div>
-            </div>
-        );
+        return <Navigate to={user.role === 'ADMIN' ? '/admin/dashboard' : '/staff/scan'} replace />;
     }
-
     return <>{children}</>;
-};
+}

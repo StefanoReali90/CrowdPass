@@ -1,33 +1,82 @@
 import { apiFetch } from './client';
-import type { User } from '../types';
+import type {
+    AdminRegisterRequest,
+    ChangePasswordRequest,
+    ForgotPasswordRequest,
+    LoginResponse,
+    ResetPasswordRequest,
+    StaffRegisterRequest,
+    User,
+} from '../types';
 
 export interface LoginCredentials {
     email: string;
     password: string;
 }
 
-
-
-export async function login(credentials: LoginCredentials): Promise<void> {
-    await apiFetch<void>('/user/login', {
+export function login(credentials: LoginCredentials): Promise<LoginResponse> {
+    return apiFetch<LoginResponse>('/user/login', {
         method: 'POST',
         body: JSON.stringify(credentials),
     });
 }
 
-export async function getCurrentUser(): Promise<User> {
-    return await apiFetch<User>('/user/me');
+export function getCurrentUser(): Promise<User> {
+    return apiFetch<User>('/user/me');
 }
 
-export async function logout(): Promise<void> {
-    await apiFetch<void>('/user/logout', {
+export function logout(): Promise<void> {
+    return apiFetch<void>('/user/logout', { method: 'POST' });
+}
+
+export function registerAdmin(data: AdminRegisterRequest): Promise<User> {
+    return apiFetch<User>('/user/register', {
         method: 'POST',
+        body: JSON.stringify(data),
     });
 }
 
-export async function registerAdmin(data: import('../types').AdminRegisterRequest): Promise<User> {
-    return await apiFetch<User>('/user/register', {
+export function registerStaff(data: StaffRegisterRequest): Promise<User> {
+    return apiFetch<User>('/user/staff-register', {
         method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+export function getUsers(): Promise<User[]> {
+    return apiFetch<User[]>('/user');
+}
+
+export function getUserByEmail(email: string): Promise<User> {
+    const query = new URLSearchParams({ email });
+    return apiFetch<User>(`/user/search?${query.toString()}`);
+}
+
+export function getUserById(userId: number): Promise<User> {
+    return apiFetch<User>(`/user/${userId}`);
+}
+
+export function deleteUser(userId: number): Promise<void> {
+    return apiFetch<void>(`/user/${userId}`, { method: 'DELETE' });
+}
+
+export function recoverPassword(data: ForgotPasswordRequest): Promise<void> {
+    return apiFetch<void>('/user/recover-password', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+export function changePassword(userId: number, data: ChangePasswordRequest): Promise<void> {
+    return apiFetch<void>(`/user/${userId}/change-password`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+    });
+}
+
+export function resetPassword(data: ResetPasswordRequest): Promise<void> {
+    return apiFetch<void>('/user/reset-password', {
+        method: 'PATCH',
         body: JSON.stringify(data),
     });
 }

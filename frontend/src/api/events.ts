@@ -1,42 +1,48 @@
 import { apiFetch } from './client';
-import type { Event, EventDashboardResponse } from '../types';
+import type { Event, EventDashboardResponse, EventRequest } from '../types';
 
-
-export async function getEvents(): Promise<Event[]> {
-    return await apiFetch<Event[]>('/events');
+export function getEvents(): Promise<Event[]> {
+    return apiFetch<Event[]>('/events');
 }
 
-export async function getMyEvents(): Promise<Event[]> {
-    return await apiFetch<Event[]>('/events/my-events');
+export function getMyEvents(): Promise<Event[]> {
+    return apiFetch<Event[]>('/events/my-events');
 }
 
-export async function getEventById(eventId: number): Promise<Event> {
-    return await apiFetch<Event>(`/events/${eventId}`);
+export function getEventById(eventId: number): Promise<Event> {
+    return apiFetch<Event>(`/events/${eventId}`);
 }
 
-export async function getEventDashboard(eventId: number): Promise<EventDashboardResponse> {
-    return await apiFetch<EventDashboardResponse>(`/events/${eventId}/dashboard`);
-}
-export async function incrementWalkInCount(eventId: number): Promise<void> {
-    await apiFetch<void>(`/events/${eventId}/walk-in`, {
-        method: 'PATCH',
-    });
-}
-export async function decrementWalkInCount(eventId: number): Promise<void> {
-    await apiFetch<void>(`/events/${eventId}/walk-in/decrement`, {
-        method: 'PATCH',
-    });
+export function getEventDashboard(eventId: number): Promise<EventDashboardResponse> {
+    return apiFetch<EventDashboardResponse>(`/events/${eventId}/dashboard`);
 }
 
-export async function closeEvent(eventId: number): Promise<void> {
-    await apiFetch<void>(`/events/${eventId}/close`, {
-        method: 'PATCH',
-    });
-}
-
-export async function createEvent(data: import('../types').CreateEventRequest): Promise<Event> {
-    return await apiFetch<Event>('/events/', {
+export function createEvent(data: EventRequest): Promise<Event> {
+    return apiFetch<Event>('/events/', {
         method: 'POST',
         body: JSON.stringify(data),
     });
+}
+
+export function updateEvent(eventId: number, data: EventRequest): Promise<Event> {
+    return apiFetch<Event>(`/events/${eventId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+}
+
+export function deleteEvent(eventId: number): Promise<void> {
+    return apiFetch<void>(`/events/${eventId}`, { method: 'DELETE' });
+}
+
+export function incrementWalkInCount(eventId: number): Promise<void> {
+    return apiFetch<void>(`/events/${eventId}/walk-in`, { method: 'PATCH' });
+}
+
+export function decrementWalkInCount(eventId: number): Promise<void> {
+    return apiFetch<void>(`/events/${eventId}/walk-in/decrement`, { method: 'PATCH' });
+}
+
+export function closeEvent(eventId: number): Promise<void> {
+    return apiFetch<void>(`/events/${eventId}/close`, { method: 'PATCH' });
 }

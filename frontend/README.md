@@ -1,75 +1,65 @@
-# React + TypeScript + Vite
+# CrowdPass frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend React + TypeScript per prenotazioni pubbliche, amministrazione eventi e check-in.
 
-Currently, two official plugins are available:
+## Avvio locale
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Il backend viene cercato su `http://localhost:8080`. Per usare un altro indirizzo, copia `.env.example` in `.env.local` e modifica `VITE_API_BASE_URL`. Prima della pubblicazione configura anche `VITE_PRIVACY_CONTROLLER_NAME` e `VITE_PRIVACY_CONTACT_EMAIL` con i dati reali del titolare del trattamento.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Rotte
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- `/prenota?eventId=1`: prenotazione pubblica e generazione pass QR.
+- `/privacy`: informativa sul trattamento dei dati della prenotazione.
+- `/login`, `/register`, `/forgot-password`, `/reset-password?token=...`: autenticazione e recupero credenziali.
+- `/staff/scan`: check-in, disponibile a STAFF e ADMIN.
+- `/admin/dashboard`: statistiche, walk-in e chiusura evento.
+- `/admin/events`: creazione, lettura, modifica ed eliminazione eventi.
+- `/admin/bookings`: elenco, ricerche e annullamento prenotazioni.
+- `/admin/users`: creazione STAFF, elenco, ricerca ed eliminazione utenti.
+- `/account`: cambio password.
 
+Tutte le richieste autenticate usano il cookie HttpOnly `jwt` tramite `credentials: 'include'`.
+
+## Verifiche
+
+```bash
+npm run lint
+npm run build
 ```
+
+Per eseguire lo smoke test completo contro un backend locale isolato (consigliato: porta `8081` con database temporaneo):
+
+```powershell
+$env:CROWDPASS_ALLOW_SMOKE_WRITE='true'
+$env:CROWDPASS_API_BASE_URL='http://127.0.0.1:8081'
+$env:CROWDPASS_REGISTRATION_CODE='e2e-registration-key'
+npm run test:api
+```
+
+Lo script rifiuta host non locali e richiede l’abilitazione esplicita perché crea dati di collaudo.
+
+## Note sul contratto backend
+
+- La landing pubblica usa i campi evento già esistenti `imageUrl` e `description` e accetta due campi opzionali aggiuntivi:
+
+  ```json
+  {
+    "videoUrl": "https://cdn.example.it/evento/hero.mp4",
+    "faqs": [
+      {
+        "question": "Devo pagare subito?",
+        "answer": "No, pagherai all'ingresso."
+      }
+    ]
+  }
+  ```
+
+  `videoUrl` può contenere un MP4/WebM diretto, YouTube o Vimeo. Se `videoUrl` manca, il frontend usa `imageUrl`; se `faqs` manca o è vuoto, genera FAQ standard dai dati dell'evento. Il backend deve restituire questi campi nelle risposte evento e accettarli nei DTO di creazione/modifica perché siano condivisi tra dispositivi.
+- `UserResponse` non contiene l'ID, ma eliminazione e cambio password richiedono un ID numerico. Le schermate espongono quindi un campo ID manuale.
+- `BookingResponse` non contiene l'ID, ma l'annullamento richiede l'ID numerico. La schermata prenotazioni consente la ricerca e l'annullamento per ID manuale.
+- Il recupero password accetta il token nella rotta `/reset-password`, ma il backend deve consegnare tale token all'utente (per esempio via email).
