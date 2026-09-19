@@ -1,10 +1,15 @@
 package org.spring.crowdpass.event.mapper;
 
+import org.spring.crowdpass.event.dto.EventFaqDTO;
 import org.spring.crowdpass.event.dto.EventRequest;
 import org.spring.crowdpass.event.dto.EventResponse;
 import org.spring.crowdpass.event.entity.Event;
+import org.spring.crowdpass.event.entity.EventFaq;
 import org.spring.crowdpass.event.enums.EventState;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class EventMapper {
@@ -21,10 +26,28 @@ public class EventMapper {
         event.setNormalPrice(eventRequest.normalPrice());
         event.setBookingPrice(eventRequest.bookingPrice());
         event.setEventState(EventState.WAITING);
+        event.setVideoUrl(eventRequest.videoUrl());
+        List<EventFaq> eventFaqList = new ArrayList<>();
+        if (eventRequest.faqs() != null) {
+            for (var faqDTO : eventRequest.faqs()) {
+                EventFaq faq = new EventFaq();
+                faq.setQuestion(faqDTO.question());
+                faq.setAnswer(faqDTO.answer());
+                eventFaqList.add(faq);
+            }
+        }
+        event.setFaqs(eventFaqList);
         return event;
     }
 
     public EventResponse toResponse(Event event) {
+        List<EventFaqDTO> faqs = new ArrayList<>();
+        if (event.getFaqs() != null) {
+            for (var faq : event.getFaqs()) {
+                EventFaqDTO faqDTO = new EventFaqDTO(faq.getQuestion(), faq.getAnswer());
+                faqs.add(faqDTO);
+            }
+        }
         return new EventResponse(
                 event.getId(),
                 event.getName(),
@@ -36,7 +59,10 @@ public class EventMapper {
                 event.getDescription(),
                 event.getImageUrl(),
                 event.getLocation(),
-                event.getEventState()
+                event.getEventState(),
+                event.getVideoUrl(),
+                faqs
+
         );
     }
 }

@@ -6,6 +6,8 @@ import org.spring.crowdpass.event.enums.EventState;
 import org.spring.crowdpass.user.entity.User;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
@@ -50,6 +52,14 @@ public class Event {
 
     @Column(nullable = false)
     private int walkInCount = 0;
+
+    @Column(length = 2048)
+    private String videoUrl;
+
+    @ElementCollection
+    @CollectionTable(name = "event_faqs", joinColumns = @JoinColumn(name = "event_id"))
+    @OrderColumn(name = "faq_order")
+    private List<EventFaq> faqs = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
