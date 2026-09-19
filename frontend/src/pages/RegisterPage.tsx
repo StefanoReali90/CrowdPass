@@ -23,7 +23,6 @@ export function RegisterPage() {
                 surname: String(data.get('surname')).trim(),
                 email: String(data.get('email')).trim(),
                 password: String(data.get('password')),
-                registrationCode: String(data.get('registrationCode')).trim(),
             });
             setComplete(true);
         } catch (requestError) {
@@ -55,7 +54,6 @@ export function RegisterPage() {
                         </div>
                         <label>Email di lavoro<input name="email" type="email" autoComplete="email" required /></label>
                         <label>Password<input name="password" type="password" autoComplete="new-password" minLength={8} maxLength={100} required /></label>
-                        <label>Codice registrazione ADMIN<input name="registrationCode" autoComplete="off" required /></label>
                         <button className="button primary full" disabled={busy}><UserPlus size={17} />{busy ? 'Creazione…' : 'Crea account'}</button>
                     </form>
                 )}

@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "PassHalo",
+    "slug": "passhalo-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "passhalo",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.passhalo.mobile"
+    },
+    "android": {
+      "package": "com.passhalo.mobile",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#090B10",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Consenti a PassHalo di usare la fotocamera per convalidare i QR code.",
+          "recordAudioAndroid": false
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}

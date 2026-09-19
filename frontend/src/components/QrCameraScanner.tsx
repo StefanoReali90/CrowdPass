@@ -120,7 +120,7 @@ export function QrCameraScanner({ disabled = false, onDetected }: QrCameraScanne
                     {starting ? 'Avvio fotocamera…' : 'Scansiona con la fotocamera'}
                 </button>
             )}
-            <p className="camera-privacy">Il video resta sul dispositivo: CrowdPass analizza solo il contenuto del QR.</p>
+            <p className="camera-privacy">Il video resta sul dispositivo: PassHalo analizza solo il contenuto del QR.</p>
         </div>
     );
 }

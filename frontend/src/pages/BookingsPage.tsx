@@ -48,11 +48,9 @@ export function BookingsPage() {
     const [eventId, setEventId] = useState<number | null>(null);
     const [email, setEmail] = useState('');
     const [identifier, setIdentifier] = useState('');
-    const [knownIds, setKnownIds] = useState<Record<string, number>>({});
-    const [cancelId, setCancelId] = useState('');
     const [loading, setLoading] = useState(true);
     const [cancelling, setCancelling] = useState(false);
-    const [pendingCancellationId, setPendingCancellationId] = useState<number | null>(null);
+    const [pendingCancellation, setPendingCancellation] = useState<BookingResponse | null>(null);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
 
@@ -80,7 +78,6 @@ export function BookingsPage() {
         setLoading(true);
         setError('');
         setMessage('');
-        setKnownIds({});
 
         try {
             let result: BookingResponse[];
@@ -109,8 +106,6 @@ export function BookingsPage() {
                     if (!Number.isInteger(numericId) || numericId <= 0) throw new Error('Inserisci un ID numerico valido.');
                     const booking = await getBookingById(numericId);
                     result = [booking];
-                    setKnownIds({ [booking.uuid]: numericId });
-                    setCancelId(String(numericId));
                     break;
                 }
             }
@@ -128,30 +123,20 @@ export function BookingsPage() {
         void runSearch();
     };
 
-    const cancel = async (bookingId: number) => {
+    const cancel = async (booking: BookingResponse) => {
         setCancelling(true);
         setError('');
         setMessage('');
         try {
-            await cancelBooking(bookingId);
+            await cancelBooking(booking.uuid);
             await runSearch();
-            setMessage(`Prenotazione #${bookingId} annullata.`);
+            setMessage(`Prenotazione di ${booking.name} ${booking.surname} annullata.`);
         } catch (requestError) {
             setError(requestError instanceof Error ? requestError.message : 'Annullamento non riuscito.');
         } finally {
             setCancelling(false);
-            setPendingCancellationId(null);
+            setPendingCancellation(null);
         }
-    };
-
-    const submitCancellation = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        const numericId = Number(cancelId);
-        if (!Number.isInteger(numericId) || numericId <= 0) {
-            setError('Inserisci un ID numerico valido per annullare la prenotazione.');
-            return;
-        }
-        setPendingCancellationId(numericId);
     };
 
     return (
@@ -203,13 +188,7 @@ export function BookingsPage() {
 
             <div className="result-heading">
                 <div><span className="eyebrow">Risultati</span><h2>{loading ? 'Caricamento…' : `${bookings.length} prenotazioni`}</h2></div>
-                <form className="inline-danger-form" onSubmit={submitCancellation}>
-                    <input aria-label="ID prenotazione da annullare" placeholder="ID interno" inputMode="numeric" value={cancelId} onChange={(event) => setCancelId(event.target.value)} />
-                    <button className="button danger" disabled={cancelling || !cancelId.trim()}><TicketX size={15} /> {cancelling ? 'Annullamento…' : 'Annulla per ID'}</button>
-                </form>
             </div>
-
-            <p className="contract-note">L’API restituisce UUID e dati del pass, ma non l’ID numerico richiesto dall’endpoint di annullamento. Per annullare, inserisci l’ID interno oppure cerca prima “Per ID interno”.</p>
 
             {!loading && bookings.length === 0 ? (
                 <div className="panel empty-state"><h2>Nessuna prenotazione trovata</h2><p>Modifica i filtri e riprova.</p></div>
@@ -218,9 +197,7 @@ export function BookingsPage() {
                     <table className="data-table">
                         <thead><tr><th>Cliente</th><th>Evento</th><th>Creata</th><th>Stato</th><th>UUID</th><th>Azioni</th></tr></thead>
                         <tbody>
-                            {bookings.map((booking) => {
-                                const internalId = knownIds[booking.uuid];
-                                return (
+                            {bookings.map((booking) => (
                                     <tr key={booking.uuid}>
                                         <td><strong>{booking.name} {booking.surname}</strong><small>{booking.email}{booking.phone ? ` · ${booking.phone}` : ''}</small></td>
                                         <td>{booking.eventName}<small>Evento #{booking.eventId}</small></td>
@@ -229,27 +206,26 @@ export function BookingsPage() {
                                         <td><code>{booking.uuid}</code></td>
                                         <td>
                                             <div className="table-actions">
-                                                <a className="icon-button" href={qrSource(booking.qrCodeBase64)} download={`CrowdPass-${booking.uuid}.png`} aria-label="Scarica QR"><Download size={16} /></a>
-                                                {internalId && booking.bookingStatus !== 'CANCELLED' && (
-                                                    <button className="icon-button danger" onClick={() => setPendingCancellationId(internalId)} disabled={cancelling} aria-label={`Annulla prenotazione ${internalId}`}><TicketX size={16} /></button>
+                                                <a className="icon-button" href={qrSource(booking.qrCodeBase64)} download={`PassHalo-${booking.uuid}.png`} aria-label="Scarica QR"><Download size={16} /></a>
+                                                {booking.bookingStatus !== 'CANCELLED' && (
+                                                    <button className="icon-button danger" onClick={() => setPendingCancellation(booking)} disabled={cancelling} aria-label={`Annulla la prenotazione di ${booking.name} ${booking.surname}`}><TicketX size={16} /></button>
                                                 )}
                                             </div>
                                         </td>
                                     </tr>
-                                );
-                            })}
+                            ))}
                         </tbody>
                     </table>
                 </div>
             )}
             <ConfirmDialog
-                open={pendingCancellationId !== null}
-                title={`Annullare la prenotazione #${pendingCancellationId ?? ''}?`}
+                open={pendingCancellation !== null}
+                title={pendingCancellation ? `Annullare la prenotazione di ${pendingCancellation.name} ${pendingCancellation.surname}?` : 'Annullare la prenotazione?'}
                 description="Il pass non potrà più essere convalidato all’ingresso. L’operazione non può essere annullata."
                 confirmLabel="Annulla prenotazione"
                 busy={cancelling}
-                onCancel={() => setPendingCancellationId(null)}
-                onConfirm={() => pendingCancellationId ? cancel(pendingCancellationId) : undefined}
+                onCancel={() => setPendingCancellation(null)}
+                onConfirm={() => pendingCancellation ? cancel(pendingCancellation) : undefined}
             />
         </section>
     );

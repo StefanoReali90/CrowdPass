@@ -3,7 +3,11 @@ import { getCurrentUser, login as apiLogin, logout as apiLogout } from '../api/a
 import { AUTH_EXPIRED_EVENT, isApiError } from '../api/client';
 import { AuthContext } from './auth-context';
 
-const unavailableMessage = 'Il server CrowdPass non è raggiungibile. Controlla che il backend sia avviato e riprova.';
+const unavailableMessage = 'Il server PassHalo non è raggiungibile. Controlla che il backend sia avviato e riprova.';
+
+function isMissingSession(error: unknown) {
+    return isApiError(error) && (error.status === 401 || error.status === 403);
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<Awaited<ReturnType<typeof getCurrentUser>> | null>(null);
@@ -24,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             })
             .catch((error: unknown) => {
                 if (!active) return;
-                if (isApiError(error) && error.status === 401) setUser(null);
+                if (isMissingSession(error)) setUser(null);
                 else setAuthError(unavailableMessage);
             })
             .finally(() => {
@@ -43,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             setUser(await getCurrentUser());
         } catch (error) {
-            if (isApiError(error) && error.status === 401) setUser(null);
+            if (isMissingSession(error)) setUser(null);
             else setAuthError(unavailableMessage);
         } finally {
             setIsLoading(false);
