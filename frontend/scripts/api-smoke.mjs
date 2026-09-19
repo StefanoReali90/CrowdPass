@@ -123,6 +123,17 @@ const eventPayload = {
     start: localDateTime(start),
     end: localDateTime(end),
     imageUrl: 'https://example.com/crowdpass-e2e.jpg',
+    videoUrl: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
+    faqs: [
+        {
+            question: 'Come ricevo il pass?',
+            answer: 'Il QR code viene mostrato al termine della prenotazione.',
+        },
+        {
+            question: 'Posso usare il pass due volte?',
+            answer: 'No, ogni QR code può essere convalidato una sola volta.',
+        },
+    ],
     totalTickets: 100,
     normalPrice: 15,
     bookingPrice: 10,
@@ -135,17 +146,36 @@ const createdEvent = await request('/events/', {
 });
 const eventId = createdEvent.data.id;
 assert.ok(eventId > 0);
+assert.equal(createdEvent.data.videoUrl, eventPayload.videoUrl);
+assert.deepEqual(createdEvent.data.faqs, eventPayload.faqs);
 
+const updatedEventPayload = {
+    ...eventPayload,
+    name: 'CrowdPass E2E aggiornato',
+    videoUrl: 'https://vimeo.com/76979871',
+    faqs: [
+        {
+            question: 'Quando devo mostrare il QR?',
+            answer: 'Mostralo allo staff al momento dell’ingresso.',
+        },
+    ],
+};
 const updatedEvent = await request(`/events/${eventId}`, {
     method: 'PUT',
     cookie: adminCookie,
-    body: { ...eventPayload, name: 'CrowdPass E2E aggiornato' },
+    body: updatedEventPayload,
 });
 assert.equal(updatedEvent.data.name, 'CrowdPass E2E aggiornato');
+assert.equal(updatedEvent.data.videoUrl, updatedEventPayload.videoUrl);
+assert.deepEqual(updatedEvent.data.faqs, updatedEventPayload.faqs);
 const publicEvent = await request(`/events/${eventId}`);
 assert.equal(publicEvent.data.id, eventId);
+assert.equal(publicEvent.data.videoUrl, updatedEventPayload.videoUrl);
+assert.deepEqual(publicEvent.data.faqs, updatedEventPayload.faqs);
 const ownedEvents = await request('/events/my-events', { cookie: adminCookie });
 assert.equal(ownedEvents.data.length, 1);
+assert.equal(ownedEvents.data[0].videoUrl, updatedEventPayload.videoUrl);
+assert.deepEqual(ownedEvents.data[0].faqs, updatedEventPayload.faqs);
 
 const disposableEvent = await request('/events/', {
     method: 'POST',

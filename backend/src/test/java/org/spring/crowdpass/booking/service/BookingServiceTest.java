@@ -65,14 +65,14 @@ public class BookingServiceTest {
         booking.setBookingStatus(BookingStatus.CREATED);
         booking.setCheckInDateTime(null);
         booking.setEvent(event);
-        when(bookingRepository.findByUuid(bookingId)).thenReturn(Optional.of(booking));
+        when(bookingRepository.findForCheckInByUuid(bookingId)).thenReturn(Optional.of(booking));
         when(bookingMapper.toCheckInResponse(booking)).thenReturn(expectedResponse);
         CheckInResponse response = bookingService.checkInBooking(bookingId);
         assertEquals(expectedResponse, response);
         assertNotNull(response);
         assertEquals(BookingStatus.VALIDATED, booking.getBookingStatus());
         assertNotNull(booking.getCheckInDateTime());
-        verify(bookingRepository, times(1)).findByUuid(bookingId);
+        verify(bookingRepository, times(1)).findForCheckInByUuid(bookingId);
 
     }
 
@@ -85,18 +85,18 @@ public class BookingServiceTest {
         booking.setUuid(bookingId);
         booking.setBookingStatus(BookingStatus.VALIDATED);
         booking.setEvent(event);
-        when(bookingRepository.findByUuid(bookingId)).thenReturn(Optional.of(booking));
+        when(bookingRepository.findForCheckInByUuid(bookingId)).thenReturn(Optional.of(booking));
         assertThrows(AlreadyValidatedException.class, () -> bookingService.checkInBooking(bookingId));
-        verify(bookingRepository, times(1)).findByUuid(bookingId);
+        verify(bookingRepository, times(1)).findForCheckInByUuid(bookingId);
     }
 
     @Test
     void checkin_bookingNotFound_ShouldThrowException() {
         UUID uuid = UUID.randomUUID();
         Booking booking = new Booking();
-        when(bookingRepository.findByUuid(uuid)).thenReturn(Optional.empty());
+        when(bookingRepository.findForCheckInByUuid(uuid)).thenReturn(Optional.empty());
         assertThrows(BookingNotFoundException.class, () -> bookingService.checkInBooking(uuid));
-        verify(bookingRepository, times(1)).findByUuid(uuid);
+        verify(bookingRepository, times(1)).findForCheckInByUuid(uuid);
     }
 
     @Test
@@ -108,9 +108,9 @@ public class BookingServiceTest {
         booking.setUuid(uuid);
         booking.setBookingStatus(BookingStatus.CANCELLED);
         booking.setEvent(event);
-        when(bookingRepository.findByUuid(uuid)).thenReturn(Optional.of(booking));
+        when(bookingRepository.findForCheckInByUuid(uuid)).thenReturn(Optional.of(booking));
         assertThrows(AlreadyCanceledException.class, () -> bookingService.checkInBooking(uuid));
-        verify(bookingRepository, times(1)).findByUuid(uuid);
+        verify(bookingRepository, times(1)).findForCheckInByUuid(uuid);
     }
 
     @Test
@@ -218,9 +218,9 @@ public class BookingServiceTest {
         booking.setBookingStatus(BookingStatus.CREATED);
         booking.setCheckInDateTime(null);
         booking.setEvent(event);
-        when(bookingRepository.findByUuid(bookingId)).thenReturn(Optional.of(booking));
+        when(bookingRepository.findForCheckInByUuid(bookingId)).thenReturn(Optional.of(booking));
         assertThrows(EventFinishedException.class, () -> bookingService.checkInBooking(bookingId));
-        verify(bookingRepository, times(1)).findByUuid(bookingId);
+        verify(bookingRepository, times(1)).findForCheckInByUuid(bookingId);
     }
 }
 

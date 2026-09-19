@@ -1,10 +1,10 @@
 package org.spring.crowdpass.event.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record EventRequest(
         @NotBlank
@@ -27,7 +27,12 @@ public record EventRequest(
         Double normalPrice,
         @NotNull
         @Positive
-        Double bookingPrice
+        Double bookingPrice,
+        @Size(max=2048)
+        String videoUrl,
+        @Size(max = 12)
+        @Valid
+        List<EventFaqDTO> faqs
 
 
 ) {

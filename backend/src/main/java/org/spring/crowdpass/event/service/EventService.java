@@ -7,6 +7,7 @@ import org.spring.crowdpass.booking.exception.EventFinishedException;
 import org.spring.crowdpass.booking.repository.BookingRepository;
 import org.spring.crowdpass.booking.service.BookingService;
 import org.spring.crowdpass.event.dto.EventDashboardResponse;
+import org.spring.crowdpass.event.entity.EventFaq;
 import org.spring.crowdpass.event.enums.EventState;
 import org.spring.crowdpass.event.exception.AccessDeniedException;
 import org.spring.crowdpass.event.repository.EventRepository;
@@ -71,6 +72,17 @@ public class EventService {
         existingEvent.setTotalTickets(event.totalTickets());
         existingEvent.setNormalPrice(event.normalPrice());
         existingEvent.setBookingPrice(event.bookingPrice());
+        existingEvent.setVideoUrl(event.videoUrl());
+        if (event.faqs() != null) {
+            List<EventFaq> eventFaqList = existingEvent.getFaqs();
+            eventFaqList.clear();
+            for (var faqDTO : event.faqs()) {
+                EventFaq faq = new EventFaq();
+                faq.setQuestion(faqDTO.question());
+                faq.setAnswer(faqDTO.answer());
+                eventFaqList.add(faq);
+            }
+        }
         Event updatedEvent = eventRepository.save(existingEvent);
         return eventMapper.toResponse(updatedEvent);
 
