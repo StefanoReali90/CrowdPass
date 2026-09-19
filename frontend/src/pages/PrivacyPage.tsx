@@ -12,7 +12,7 @@ export function PrivacyPage() {
             <header className="privacy-heading">
                 <span className="eyebrow"><ShieldCheck size={15} /> Privacy e dati personali</span>
                 <h1>Informazioni sul trattamento dei dati<span className="accent-text">.</span></h1>
-                <p>Qui trovi, in modo sintetico, come vengono usati i dati inseriti per ottenere il pass CrowdPass.</p>
+                <p>Qui trovi, in modo sintetico, come vengono usati i dati inseriti per ottenere il pass PassHalo.</p>
             </header>
 
             <div className="panel privacy-content">
@@ -33,7 +33,7 @@ export function PrivacyPage() {
                     <span className="privacy-index">02</span>
                     <div>
                         <h2>Dati raccolti e finalità</h2>
-                        <p>Nome, cognome ed email sono necessari per creare e gestire la prenotazione. Il telefono è facoltativo. CrowdPass genera inoltre un identificativo univoco e registra lo stato del pass per impedire utilizzi multipli.</p>
+                        <p>Nome, cognome ed email sono necessari per creare e gestire la prenotazione. Il telefono è facoltativo. PassHalo genera inoltre un identificativo univoco e registra lo stato del pass per impedire utilizzi multipli.</p>
                         <p>Questi dati sono usati per fornire la prenotazione richiesta, mostrare il QR code e verificare l’ingresso all’evento.</p>
                     </div>
                 </section>
@@ -52,7 +52,7 @@ export function PrivacyPage() {
                     <div>
                         <h2>Accesso e conservazione</h2>
                         <p>I dati sono accessibili agli amministratori autorizzati. Lo staff addetto all’ingresso può soltanto verificare il QR code e ricevere l’esito del controllo.</p>
-                        <p>I dati identificativi vengono conservati fino alla chiusura amministrativa dell’evento, quando CrowdPass ne prevede la cancellazione o anonimizzazione. Restano soltanto risultati aggregati, come numero di prenotazioni e presenze.</p>
+                        <p>I dati identificativi vengono conservati fino alla chiusura amministrativa dell’evento, quando PassHalo ne prevede la cancellazione o anonimizzazione. Restano soltanto risultati aggregati, come numero di prenotazioni e presenze.</p>
                     </div>
                 </section>
 

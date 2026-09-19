@@ -28,7 +28,7 @@ export function ForgotPasswordPage() {
             <div className="form-intro">
                 <span className="eyebrow"><Mail size={14} /> Recupero credenziali</span>
                 <h1>Ripartiamo<span className="accent-text">.</span></h1>
-                <p>Inserisci l’email collegata al tuo account CrowdPass.</p>
+                <p>Inserisci l’email collegata al tuo account PassHalo.</p>
             </div>
             <div className="panel form-panel">
                 {error && <div className="notice error" role="alert">{error}</div>}

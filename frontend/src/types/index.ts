@@ -16,7 +16,6 @@ export interface AdminRegisterRequest {
     surname: string;
     email: string;
     password: string;
-    registrationCode: string;
 }
 
 export interface StaffRegisterRequest {

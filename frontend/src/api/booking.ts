@@ -38,6 +38,6 @@ export function checkInBooking(uuid: string): Promise<CheckInResponse> {
     return apiFetch<CheckInResponse>(`/bookings/check-in/${segment(uuid)}`, { method: 'PATCH' });
 }
 
-export function cancelBooking(bookingId: number): Promise<void> {
-    return apiFetch<void>(`/bookings/${bookingId}`, { method: 'DELETE' });
+export function cancelBooking(uuid: string): Promise<void> {
+    return apiFetch<void>(`/bookings/${segment(uuid)}`, { method: 'DELETE' });
 }

@@ -41,15 +41,18 @@ function getFaqs(event?: Event): EventFaq[] {
     const customFaqs = (event?.faqs ?? []).filter((faq) => faq.question.trim() && faq.answer.trim());
     if (customFaqs.length > 0) return customFaqs;
     if (!event) return [];
+    const hasBookingDiscount = event.bookingPrice < event.normalPrice;
 
     return [
         {
             question: 'Devo pagare subito?',
-            answer: `No. La prenotazione genera il pass e blocca il prezzo ridotto di ${formatMoney(event.bookingPrice)}. Pagherai all’ingresso secondo le modalità comunicate dall’organizzatore.`,
+            answer: `No. La prenotazione genera il pass e conferma il prezzo di ${formatMoney(event.bookingPrice)}. Pagherai all’ingresso secondo le modalità comunicate dall’organizzatore.`,
         },
         {
             question: 'Quanto costa l’ingresso?',
-            answer: `Con il pass CrowdPass l’ingresso costa ${formatMoney(event.bookingPrice)} invece di ${formatMoney(event.normalPrice)}.`,
+            answer: hasBookingDiscount
+                ? `Con il pass PassHalo l’ingresso costa ${formatMoney(event.bookingPrice)} invece di ${formatMoney(event.normalPrice)}.`
+                : `L’ingresso costa ${formatMoney(event.bookingPrice)} sia con prenotazione sia direttamente in cassa.`,
         },
         {
             question: 'Come funziona la prenotazione?',
@@ -61,7 +64,7 @@ function getFaqs(event?: Event): EventFaq[] {
         },
         {
             question: 'Quanti posti sono disponibili?',
-            answer: `La capienza indicata per l’evento è di ${event.totalTickets.toLocaleString('it-IT')} persone. Prenota in anticipo per assicurarti il prezzo ridotto.`,
+            answer: `La capienza indicata per l’evento è di ${event.totalTickets.toLocaleString('it-IT')} persone. Prenota in anticipo per assicurarti il posto.`,
         },
     ];
 }
@@ -100,6 +103,7 @@ export function BookingPage() {
     }, []);
 
     const selectedEvent = events.find((event) => event.id === selectedEventId);
+    const hasBookingDiscount = selectedEvent !== undefined && selectedEvent.bookingPrice < selectedEvent.normalPrice;
     const faqs = getFaqs(selectedEvent);
 
     const selectEvent = (eventId: number) => {
@@ -152,7 +156,7 @@ export function BookingPage() {
                     <p>{result.eventName}<br />{result.email}</p>
                     <img className="qr-image" src={qr} alt="QR code da mostrare all’ingresso" />
                     <p className="form-note">Mostra questo codice al personale all’ingresso.</p>
-                    <a className="button primary full" href={qr} download={`CrowdPass-${result.uuid}.png`}>
+                    <a className="button primary full" href={qr} download={`PassHalo-${result.uuid}.png`}>
                         <Download size={17} /> Scarica il QR code
                     </a>
                     <button className="button full" onClick={() => setResult(null)}>Un’altra prenotazione</button>
@@ -166,7 +170,7 @@ export function BookingPage() {
             <section className="public-event-hero" aria-labelledby="public-event-title">
                 <EventHeroMedia
                     key={selectedEvent?.id ?? 'event-placeholder'}
-                    eventName={selectedEvent?.name ?? 'CrowdPass'}
+                    eventName={selectedEvent?.name ?? 'PassHalo'}
                     imageUrl={selectedEvent?.imageUrl}
                     videoUrl={selectedEvent?.videoUrl}
                 />
@@ -215,7 +219,13 @@ export function BookingPage() {
 
                         <div className="public-story-stats">
                             <div><UsersRound size={20} /><span>Capienza<strong>{selectedEvent.totalTickets.toLocaleString('it-IT')} posti</strong></span></div>
-                            <div><WalletCards size={20} /><span>Risparmio<strong>{formatMoney(Math.max(0, selectedEvent.normalPrice - selectedEvent.bookingPrice))}</strong></span></div>
+                            <div>
+                                <WalletCards size={20} />
+                                <span>
+                                    {hasBookingDiscount ? 'Risparmio' : 'Prezzo ingresso'}
+                                    <strong>{formatMoney(hasBookingDiscount ? selectedEvent.normalPrice - selectedEvent.bookingPrice : selectedEvent.bookingPrice)}</strong>
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -232,8 +242,12 @@ export function BookingPage() {
                 <div className="public-booking-layout public-section">
                     <div className="public-booking-copy">
                         <span className="eyebrow">Assicurati il tuo posto</span>
-                        <h2 id="booking-title">Il pass è gratuito. Il vantaggio è tuo<span className="accent-text">.</span></h2>
-                        <p>Prenota in meno di un minuto, scarica il QR e presentalo all’ingresso per ottenere il prezzo ridotto.</p>
+                        <h2 id="booking-title">La prenotazione è gratuita. Il posto è tuo<span className="accent-text">.</span></h2>
+                        <p>
+                            {hasBookingDiscount
+                                ? 'Prenota in meno di un minuto, scarica il QR e presentalo all’ingresso per ottenere il prezzo ridotto.'
+                                : 'Prenota in meno di un minuto, scarica il QR e presentalo all’ingresso per accedere all’evento.'}
+                        </p>
                         <ol className="public-booking-steps">
                             <li><span>01</span><div><strong>Inserisci i dati</strong><p>Servono solo nome, cognome ed email.</p></div></li>
                             <li><span>02</span><div><strong>Scarica il pass</strong><p>Il QR personale appare subito dopo la conferma.</p></div></li>
@@ -260,7 +274,9 @@ export function BookingPage() {
                                 {selectedEvent && (
                                     <p className="event-meta">
                                         {formatEventDate(selectedEvent.startDateTime)} · {selectedEvent.location}<br />
-                                        Ingresso ridotto: {formatMoney(selectedEvent.bookingPrice)} invece di {formatMoney(selectedEvent.normalPrice)}
+                                        {hasBookingDiscount
+                                            ? <>Ingresso ridotto: {formatMoney(selectedEvent.bookingPrice)} invece di {formatMoney(selectedEvent.normalPrice)}</>
+                                            : <>Ingresso: {formatMoney(selectedEvent.bookingPrice)}</>}
                                     </p>
                                 )}
                             </div>
@@ -311,7 +327,7 @@ export function BookingPage() {
             )}
 
             <section className="public-final-cta">
-                <span className="eyebrow">CrowdPass</span>
+                <span className="eyebrow">PassHalo</span>
                 <h2>Ci vediamo sotto il palco<span className="accent-text">.</span></h2>
                 <a className="button primary" href="#booking-form">Prenota ora <ArrowRight size={18} /></a>
             </section>

@@ -1,5 +1,5 @@
 {
-  "name": "crowdpass-fe",
+  "name": "passhalo-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,6 +8,7 @@
         "build": "tsc -b && vite build",
         "lint": "eslint .",
         "preview": "vite preview",
+        "share": "npm run build && vite preview --host 127.0.0.1 --port 4173 --strictPort",
         "test:api": "node scripts/api-smoke.mjs"
     },
   "dependencies": {

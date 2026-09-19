@@ -17,7 +17,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
     }
 
     componentDidCatch(error: Error, info: ErrorInfo) {
-        console.error('Errore non gestito nell’interfaccia CrowdPass', error, info);
+        console.error('Errore non gestito nell’interfaccia PassHalo', error, info);
     }
 
     render() {
@@ -29,7 +29,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
                 <span className="eyebrow">Errore applicativo</span>
                 <h1>Qualcosa non ha funzionato.</h1>
                 <p>I dati non sono stati modificati. Ricarica la pagina per riprendere il lavoro.</p>
-                <button className="button primary" onClick={() => window.location.reload()}><RefreshCw size={17} /> Ricarica CrowdPass</button>
+                <button className="button primary" onClick={() => window.location.reload()}><RefreshCw size={17} /> Ricarica PassHalo</button>
             </main>
         );
     }

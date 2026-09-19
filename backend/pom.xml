@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.spring</groupId>
-    <artifactId>CrowdPass</artifactId>
+    <artifactId>PassHalo</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>CrowdPass</name>
-    <description>CrowdPass</description>
+    <name>PassHalo</name>
+    <description>PassHalo</description>
     <url/>
     <licenses>
         <license/>

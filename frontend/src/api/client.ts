@@ -1,5 +1,5 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
-export const AUTH_EXPIRED_EVENT = 'crowdpass:auth-expired';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '');
+export const AUTH_EXPIRED_EVENT = 'passhalo:auth-expired';
 
 interface ApiProblem {
     detail?: string;
@@ -80,7 +80,7 @@ export async function apiFetch<T>(endpoint: string, options: ApiRequestOptions =
     } catch (error) {
         if (timedOut) throw new NetworkError('Il server sta impiegando troppo tempo a rispondere. Riprova.');
         if (externalSignal?.aborted) throw error;
-        throw new NetworkError('CrowdPass non riesce a raggiungere il server. Controlla la connessione e riprova.');
+        throw new NetworkError('PassHalo non riesce a raggiungere il server. Controlla la connessione e riprova.');
     } finally {
         window.clearTimeout(timeout);
         externalSignal?.removeEventListener('abort', forwardAbort);

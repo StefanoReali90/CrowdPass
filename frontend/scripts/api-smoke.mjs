@@ -1,15 +1,14 @@
 import assert from 'node:assert/strict';
 
-const baseUrl = (process.env.CROWDPASS_API_BASE_URL || 'http://127.0.0.1:8081').replace(/\/$/, '');
-const registrationCode = process.env.CROWDPASS_REGISTRATION_CODE || 'e2e-registration-key';
+const baseUrl = (process.env.PASSHALO_API_BASE_URL || 'http://127.0.0.1:8081').replace(/\/$/, '');
 const target = new URL(baseUrl);
 
 if (!['127.0.0.1', 'localhost', '::1'].includes(target.hostname)) {
     throw new Error('Lo smoke test può essere eseguito soltanto contro un backend locale isolato.');
 }
 
-if (process.env.CROWDPASS_ALLOW_SMOKE_WRITE !== 'true') {
-    throw new Error('Imposta CROWDPASS_ALLOW_SMOKE_WRITE=true per autorizzare la creazione dei dati temporanei.');
+if (process.env.PASSHALO_ALLOW_SMOKE_WRITE !== 'true') {
+    throw new Error('Imposta PASSHALO_ALLOW_SMOKE_WRITE=true per autorizzare la creazione dei dati temporanei.');
 }
 
 async function request(path, { method = 'GET', body, cookie, expected = [200], headers = {} } = {}) {
@@ -52,11 +51,11 @@ function pass(label) {
 }
 
 const stamp = Date.now();
-const adminEmail = `admin-${stamp}@crowdpass.test`;
-const staffEmail = `staff-${stamp}@crowdpass.test`;
-const guestEmails = Array.from({ length: 4 }, (_, index) => `guest-${index + 1}-${stamp}@crowdpass.test`);
-const initialPassword = 'CrowdPass!123';
-const updatedPassword = 'CrowdPass!456';
+const adminEmail = `admin-${stamp}@passhalo.test`;
+const staffEmail = `staff-${stamp}@passhalo.test`;
+const guestEmails = Array.from({ length: 4 }, (_, index) => `guest-${index + 1}-${stamp}@passhalo.test`);
+const initialPassword = 'PassHalo!123';
+const updatedPassword = 'PassHalo!456';
 const start = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 const end = new Date(start.getTime() + 6 * 60 * 60 * 1000);
 const localDateTime = (value) => value.toISOString().slice(0, 19);
@@ -83,7 +82,6 @@ await request('/user/register', {
         surname: 'Smoke',
         email: adminEmail,
         password: initialPassword,
-        registrationCode,
     },
 });
 const adminLogin = await request('/user/login', {
@@ -117,12 +115,12 @@ await request('/user', { cookie: staffCookie, expected: [403] });
 pass('creazione STAFF e autorizzazioni per ruolo');
 
 const eventPayload = {
-    name: 'CrowdPass E2E',
+    name: 'PassHalo E2E',
     description: 'Evento temporaneo per il collaudo frontend',
     location: 'Test Arena',
     start: localDateTime(start),
     end: localDateTime(end),
-    imageUrl: 'https://example.com/crowdpass-e2e.jpg',
+    imageUrl: 'https://example.com/passhalo-e2e.jpg',
     videoUrl: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
     faqs: [
         {
@@ -151,7 +149,7 @@ assert.deepEqual(createdEvent.data.faqs, eventPayload.faqs);
 
 const updatedEventPayload = {
     ...eventPayload,
-    name: 'CrowdPass E2E aggiornato',
+    name: 'PassHalo E2E aggiornato',
     videoUrl: 'https://vimeo.com/76979871',
     faqs: [
         {
@@ -165,7 +163,7 @@ const updatedEvent = await request(`/events/${eventId}`, {
     cookie: adminCookie,
     body: updatedEventPayload,
 });
-assert.equal(updatedEvent.data.name, 'CrowdPass E2E aggiornato');
+assert.equal(updatedEvent.data.name, 'PassHalo E2E aggiornato');
 assert.equal(updatedEvent.data.videoUrl, updatedEventPayload.videoUrl);
 assert.deepEqual(updatedEvent.data.faqs, updatedEventPayload.faqs);
 const publicEvent = await request(`/events/${eventId}`);
@@ -222,7 +220,7 @@ assert.equal(cancelled.data.bookingStatus, 'CANCELLED');
 pass('creazione, ricerca, elenco e annullamento prenotazioni');
 
 const adminCheckIn = await request(`/bookings/check-in/${bookings[0].uuid}`, { method: 'PATCH', cookie: adminCookie });
-assert.equal(adminCheckIn.data.eventName, 'CrowdPass E2E aggiornato');
+assert.equal(adminCheckIn.data.eventName, 'PassHalo E2E aggiornato');
 const staffCheckIn = await request(`/bookings/check-in/${bookings[2].uuid}`, { method: 'PATCH', cookie: staffCookie });
 assert.equal(staffCheckIn.data.name, 'Guest3');
 await request(`/bookings/check-in/${bookings[0].uuid}`, { method: 'PATCH', cookie: staffCookie, expected: [409] });

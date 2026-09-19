@@ -216,7 +216,7 @@ export function UsersPage() {
             <ConfirmDialog
                 open={pendingDeleteId !== null}
                 title={`Eliminare l’utente #${pendingDeleteId ?? ''}?`}
-                description="L’account perderà immediatamente l’accesso a CrowdPass. Questa azione non può essere annullata."
+                description="L’account perderà immediatamente l’accesso a PassHalo. Questa azione non può essere annullata."
                 confirmLabel="Elimina utente"
                 busy={deleting}
                 onCancel={() => setPendingDeleteId(null)}

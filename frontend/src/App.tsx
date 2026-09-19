@@ -40,7 +40,7 @@ function DocumentMetadata() {
 
     useEffect(() => {
         const title = pageTitles.find(([path]) => location.pathname.startsWith(path))?.[1] ?? 'Pagina non trovata';
-        document.title = `${title} · CrowdPass`;
+        document.title = `${title} · PassHalo`;
     }, [location.pathname]);
 
     return null;
@@ -91,7 +91,7 @@ export default function App() {
                                 </Route>
                             </Routes>
                         </Suspense>
-                        <footer className="site-footer"><span>CrowdPass</span><span>Il tuo evento, dall’inizio all’ingresso.</span><Link to="/privacy">Privacy</Link></footer>
+                        <footer className="site-footer"><span>PassHalo</span><span>Il tuo evento, dall’inizio all’ingresso.</span><Link to="/privacy">Privacy</Link></footer>
                     </div>
                 </AuthProvider>
             </BrowserRouter>

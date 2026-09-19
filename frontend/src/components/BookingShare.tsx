@@ -30,7 +30,7 @@ export function BookingShare({ eventId }: BookingShareProps) {
         setBusy(true);
         try {
             await navigator.share({
-                title: 'Prenota il tuo ingresso | CrowdPass',
+                title: 'Prenota il tuo ingresso | PassHalo',
                 text: 'Prenota il tuo ingresso e ottieni il QR code.',
                 url,
             });

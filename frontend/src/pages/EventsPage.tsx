@@ -189,8 +189,8 @@ export function EventsPage() {
             setSaving(false);
             return;
         }
-        if (payload.bookingPrice >= payload.normalPrice) {
-            setError('Il prezzo prenotazione deve essere inferiore al prezzo in cassa.');
+        if (payload.bookingPrice > payload.normalPrice) {
+            setError('Il prezzo prenotazione non può superare il prezzo in cassa.');
             setSaving(false);
             return;
         }

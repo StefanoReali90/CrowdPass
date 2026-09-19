@@ -1,4 +1,4 @@
-# CrowdPass frontend
+# PassHalo frontend
 
 Frontend React + TypeScript per prenotazioni pubbliche, amministrazione eventi e check-in.
 
@@ -9,7 +9,28 @@ npm install
 npm run dev
 ```
 
-Il backend viene cercato su `http://localhost:8080`. Per usare un altro indirizzo, copia `.env.example` in `.env.local` e modifica `VITE_API_BASE_URL`. Prima della pubblicazione configura anche `VITE_PRIVACY_CONTROLLER_NAME` e `VITE_PRIVACY_CONTACT_EMAIL` con i dati reali del titolare del trattamento.
+Le chiamate a `/api` vengono inoltrate al backend su `http://127.0.0.1:8080`. Per usare un altro indirizzo, copia `.env.example` in `.env.local` e modifica `API_PROXY_TARGET`. Prima della pubblicazione configura anche `VITE_PRIVACY_CONTROLLER_NAME` e `VITE_PRIVACY_CONTACT_EMAIL` con i dati reali del titolare del trattamento.
+
+## Condivisione temporanea con Cloudflare Tunnel
+
+Questa modalità espone un solo URL HTTPS e mantiene frontend, backend e database sul computer locale.
+
+1. Avvia PostgreSQL e il backend sulla porta `8080`.
+2. Avvia la build frontend da condividere:
+
+   ```powershell
+   npm run share
+   ```
+
+3. In un secondo terminale crea il tunnel:
+
+   ```powershell
+   cloudflared tunnel --url http://localhost:4173
+   ```
+
+4. Condividi l'indirizzo `https://...trycloudflare.com` mostrato da Cloudflare.
+
+I due terminali e il backend devono rimanere avviati per tutta la prova. L'indirizzo cambia a ogni nuovo Quick Tunnel. Le richieste `/api` vengono inoltrate internamente al backend, quindi browser, cookie di autenticazione e fotocamera operano sullo stesso indirizzo pubblico. Non inserire credenziali SMTP o altri segreti nei file `VITE_*`: queste variabili sono incluse nel bundle destinato al browser.
 
 ## Rotte
 
@@ -35,9 +56,8 @@ npm run build
 Per eseguire lo smoke test completo contro un backend locale isolato (consigliato: porta `8081` con database temporaneo):
 
 ```powershell
-$env:CROWDPASS_ALLOW_SMOKE_WRITE='true'
-$env:CROWDPASS_API_BASE_URL='http://127.0.0.1:8081'
-$env:CROWDPASS_REGISTRATION_CODE='e2e-registration-key'
+$env:PASSHALO_ALLOW_SMOKE_WRITE='true'
+$env:PASSHALO_API_BASE_URL='http://127.0.0.1:8081'
 npm run test:api
 ```
 
