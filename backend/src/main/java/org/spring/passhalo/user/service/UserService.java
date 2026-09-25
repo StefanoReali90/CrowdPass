@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -40,8 +41,9 @@ public class UserService {
 
     @Transactional
     public UserResponse createUser(AdminRegistrationRequest request) {
+        String cleanedEmail = request.email() != null ? request.email().trim().toLowerCase(Locale.ROOT) : null;
 
-        if (request.email() != null && userRepository.existsByEmail(request.email())) {
+        if (request.email() != null && userRepository.existsByEmail(cleanedEmail)) {
             throw new EmailAlreadyExistsException("Email already exists");
         }
         User user = new User();
