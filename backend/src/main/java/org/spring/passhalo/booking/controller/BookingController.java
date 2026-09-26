@@ -65,8 +65,8 @@ public class BookingController {
     }
 
     @PatchMapping(path = "/check-in/{uuid}", produces = "application/json")
-    public ResponseEntity<CheckInResponse> checkInBooking(@PathVariable UUID uuid) {
-        CheckInResponse checkInResponse = bookingService.checkInBooking(uuid);
+    public ResponseEntity<CheckInResponse> checkInBooking(@PathVariable UUID uuid, @AuthenticationPrincipal User admin) {
+        CheckInResponse checkInResponse = bookingService.checkInBooking(uuid, admin);
         return ResponseEntity.ok(checkInResponse);
     }
 

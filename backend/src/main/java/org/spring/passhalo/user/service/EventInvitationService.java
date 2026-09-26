@@ -2,7 +2,6 @@ package org.spring.passhalo.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.spring.passhalo.event.entity.Event;
-import org.spring.passhalo.event.exception.AccessDeniedException;
 import org.spring.passhalo.event.exception.EventNotFoundException;
 import org.spring.passhalo.event.repository.EventRepository;
 import org.spring.passhalo.notification.service.EmailService;
@@ -42,18 +41,18 @@ public class EventInvitationService {
     private final EventRepository eventRepository;
     private final EmailService emailService;
     private final EventMembershipRepository eventMembershipRepository;
+    private final AuthEventService authEventService;
 
     @Transactional
     public void createInvitation(Long eventId, String inviteEmail, EventRole role, User admin) throws NoSuchAlgorithmException {
+
         if (role == null || inviteEmail == null || inviteEmail.isBlank() || admin == null) {
             throw new InvalidInvitationException("Invalid invitation");
         }
+        authEventService.checkUserAccess(eventId, admin.getId());
         String cleanedEmail = inviteEmail.trim().toLowerCase(Locale.ROOT);
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException("Event not found"));
         LocalDateTime now = LocalDateTime.now(ZoneId.of(timeZone));
-        if (!admin.getId().equals(event.getUser().getId())) {
-            throw new AccessDeniedException("User is not the owner of the event");
-        }
         boolean invitationAlreadyExists = eventInvitationRepository.existsByEventIdAndRecipientEmailAndInviteStateAndExpiresAtAfter(eventId, cleanedEmail, InviteState.PENDING, now);
         if (invitationAlreadyExists) {
             throw new InvitationAlreadyExistsException("Invitation already exists");
@@ -160,10 +159,8 @@ public class EventInvitationService {
 
     @Transactional
     public void revokeInvitation(Long invitationId, Long eventId, User admin) {
+        authEventService.checkUserAccess(eventId, admin.getId());
         EventInvitation invitation = eventInvitationRepository.findByIdAndEventId(invitationId, eventId).orElseThrow(() -> new InvalidInvitationException("Invitation not found"));
-        if (!admin.getId().equals(invitation.getEvent().getUser().getId())) {
-            throw new AccessDeniedException("User is not the owner of the event");
-        }
         if (invitation.getInviteState() != InviteState.PENDING) {
             throw new InvalidInvitationException("Invitation is not pending");
         }

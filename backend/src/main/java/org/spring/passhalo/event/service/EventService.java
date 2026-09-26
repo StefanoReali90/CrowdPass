@@ -7,33 +7,46 @@ import org.spring.passhalo.booking.exception.EventFinishedException;
 import org.spring.passhalo.booking.repository.BookingRepository;
 import org.spring.passhalo.booking.service.BookingService;
 import org.spring.passhalo.event.dto.EventDashboardResponse;
-import org.spring.passhalo.event.entity.EventFaq;
-import org.spring.passhalo.event.enums.EventState;
-import org.spring.passhalo.event.exception.AccessDeniedException;
-import org.spring.passhalo.event.repository.EventRepository;
 import org.spring.passhalo.event.dto.EventRequest;
 import org.spring.passhalo.event.dto.EventResponse;
 import org.spring.passhalo.event.entity.Event;
+import org.spring.passhalo.event.entity.EventFaq;
+import org.spring.passhalo.event.enums.EventState;
+import org.spring.passhalo.event.exception.AccessDeniedException;
 import org.spring.passhalo.event.exception.EventNotFoundException;
 import org.spring.passhalo.event.exception.InvalidDateException;
 import org.spring.passhalo.event.exception.InvalidPriceException;
 import org.spring.passhalo.event.mapper.EventMapper;
+import org.spring.passhalo.event.repository.EventRepository;
+import org.spring.passhalo.user.entity.EventMembership;
 import org.spring.passhalo.user.entity.User;
+import org.spring.passhalo.user.enums.MembershipState;
+import org.spring.passhalo.user.repository.EventMembershipRepository;
+import org.spring.passhalo.user.service.AuthEventService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EventService {
+    @Value("${app.time-zone}")
+    private String timezone;
 
     private final EventRepository eventRepository;
     private final BookingRepository bookingRepository;
 
     private final EventMapper eventMapper;
     private final BookingService bookingService;
+    private final AuthEventService authEventService;
+    private final EventMembershipRepository eventMembershipRepository;
 
     private void validateEventDates(EventRequest event) {
         if (event.start().isAfter(event.end())) {
@@ -56,9 +69,7 @@ public class EventService {
     @Transactional
     public EventResponse updateEvent(EventRequest event, Long Id, User admin) {
         Event existingEvent = eventRepository.findById(Id).orElseThrow(() -> new EventNotFoundException("Event not found with id: " + Id));
-        if(!existingEvent.getUser().getId().equals(admin.getId())) {
-            throw new AccessDeniedException("User is not authorized to update this event");
-        }
+        authEventService.checkUserAccess(Id, admin.getId());
         if(existingEvent.getEventState().equals(EventState.FINISHED)) {
             throw new EventFinishedException("Cannot update a finished event");
         }
@@ -101,7 +112,23 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public List<EventResponse> getEventsByUser(Long userId) {
-        return eventRepository.findByUserId(userId).stream()
+        List<Event> events = eventRepository.findByUserId(userId);
+        List< EventMembership> memberships = eventMembershipRepository.findByCollaboratorIdAndMembershipState(userId, MembershipState.ACTIVE);
+        LocalDateTime now = LocalDateTime.now(ZoneId.of(timezone));
+        memberships.removeIf(membership -> now.isBefore(membership.getValidFrom()) || (membership.getValidUntil() != null && (membership.getValidUntil().isEqual(now) || membership.getValidUntil().isBefore(now))));
+        List<Event> collaboratedEvents = memberships.stream()
+                .map(EventMembership::getEvent)
+                .toList();
+        Set<Long> seenIds = events.stream()
+                .map(Event::getId)
+                .collect(Collectors.toSet());
+
+        events.addAll(
+                collaboratedEvents.stream()
+                        .filter(event -> seenIds.add(event.getId()))
+                        .toList()
+        );
+        return events.stream()
                 .map(eventMapper::toResponse)
                 .toList();
     }
@@ -109,9 +136,7 @@ public class EventService {
     @Transactional
     public void deleteEventById(Long id, User admin) {
         Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException("Event not found with id: " + id));
-        if(!event.getUser().getId().equals(admin.getId())) {
-            throw new AccessDeniedException("User is not authorized to delete this event");
-        }
+        authEventService.checkUserAccess(id, admin.getId());
         if(event.getEventState().equals(EventState.FINISHED)) {
             throw new EventFinishedException("Cannot delete a finished event");
         }
@@ -119,11 +144,9 @@ public class EventService {
     }
     @Transactional
     public void incrementWalkInCount(Long eventId, User admin) {
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findDistinctById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
-        if(!event.getUser().getId().equals(admin.getId())) {
-            throw new AccessDeniedException("User is not authorized to register walk-in attendee for this event");
-        }
+        authEventService.checkStaffAccess(eventId, admin.getId());
         if(event.getEventState().equals(EventState.FINISHED)) {
             throw new EventFinishedException("Cannot register walk-in attendee for a finished event");
         }
@@ -134,11 +157,9 @@ public class EventService {
 
     @Transactional
     public void decrementWalkInCount(Long eventId, User admin) {
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findDistinctById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
-        if(!event.getUser().getId().equals(admin.getId())) {
-            throw new AccessDeniedException("User is not authorized to decrement walk-in attendee count for this event");
-        }
+        authEventService.checkStaffAccess(eventId, admin.getId());
         if(event.getEventState().equals(EventState.FINISHED)) {
             throw new EventFinishedException("Cannot register walk-in attendee for a finished event");
         }
@@ -153,7 +174,7 @@ public class EventService {
         double attendanceRate;
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
-        if (event.getUser().getId().equals(admin.getId())) {
+        authEventService.checkUserAccess(eventId, admin.getId());
             long totalBookings = bookingRepository.countByEventIdAndBookingStatusNot(eventId, BookingStatus.CANCELLED);
             long checkedInCount = bookingRepository.countByEventIdAndBookingStatus(eventId, BookingStatus.VALIDATED);
             long noShowCount = totalBookings - checkedInCount;
@@ -166,20 +187,25 @@ public class EventService {
             long totalAttendees = checkedInCount + event.getWalkInCount();
             double normalPrice = event.getNormalPrice() != null ? event.getNormalPrice() : 0.0;
             double totalRevenue = (checkedInCount * event.getBookingPrice()) + (event.getWalkInCount() * normalPrice);
-            return new EventDashboardResponse(eventId , event.getName(), event.getTotalTickets(), totalBookings, checkedInCount, noShowCount, attendanceRate, estimatedBookingRenueve, event.getWalkInCount(), totalAttendees, totalRevenue);
-
-        } else {
-            throw new AccessDeniedException("You are not the owner of this event");
-        }
+            return new EventDashboardResponse(
+                    eventId ,
+                    event.getName(),
+                    event.getTotalTickets(),
+                    totalBookings,
+                    checkedInCount,
+                    noShowCount,
+                    attendanceRate,
+                    estimatedBookingRenueve,
+                    event.getWalkInCount(),
+                    totalAttendees,
+                    totalRevenue);
 
     }
 
     @Transactional
     public void closeEvent(Long eventId, User admin) {
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException("Event not found with id: " + eventId));
-        if (!event.getUser().getId().equals(admin.getId())) {
-            throw new AccessDeniedException("User is not authorized to close this event");
-        }
+        authEventService.checkUserAccess(eventId, admin.getId());
         if (event.getEventState().equals(EventState.FINISHED)) {
             throw new EventFinishedException("Event is already closed with id: " + eventId);
         }

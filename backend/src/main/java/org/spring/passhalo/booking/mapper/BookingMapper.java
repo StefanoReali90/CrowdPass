@@ -37,6 +37,6 @@ public class BookingMapper {
     }
 
     public CheckInResponse toCheckInResponse(Booking booking) {
-        return new CheckInResponse(booking.getEvent().getName(), booking.getName(), booking.getSurname());
+        return new CheckInResponse(booking.getEvent().getName());
     }
 }
